@@ -157,6 +157,7 @@ type PriceFeedInfo struct {
 	Address  string
 	Decimals int
 	Network  string
+	Symbol   string
 }
 
 // GetNetworkRPCs returns RPC endpoints for a specific network

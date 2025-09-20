@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"strings"
 	"sync"
 	"time"
 
@@ -110,11 +111,12 @@ func (pc *PriceCache) UpdatePrice(networkID uint64, feedAddress string, priceDat
 
 // PriceMonitor handles monitoring of Chainlink price feeds
 type PriceMonitor struct {
-	cache    *PriceCache
-	clients  map[uint64]*ethclient.Client
-	mu       sync.RWMutex
-	stopChan chan struct{}
-	interval time.Duration
+	cache         *PriceCache
+	clients       map[uint64]*ethclient.Client
+	mu            sync.RWMutex
+	stopChan      chan struct{}
+	interval      time.Duration
+	networkConfig interface{} // Will hold reference to NetworkConfiguration for RPC switching
 }
 
 // NewPriceMonitor creates a new price monitor
@@ -135,6 +137,14 @@ func (pm *PriceMonitor) AddClient(networkID uint64, client *ethclient.Client) {
 	log.Printf("Added client for network %d", networkID)
 }
 
+// UpdateClient updates an Ethereum client for a specific network (used after RPC switching)
+func (pm *PriceMonitor) UpdateClient(networkID uint64, client *ethclient.Client) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	pm.clients[networkID] = client
+	log.Printf("Updated client for network %d after RPC switch", networkID)
+}
+
 // AddPriceFeed adds a price feed to monitor
 func (pm *PriceMonitor) AddPriceFeed(networkID uint64, feedAddress string) {
 	pm.cache.AddFeed(networkID, feedAddress)
@@ -152,6 +162,11 @@ func (pm *PriceMonitor) GetAllPrices(networkID uint64) map[string]*PriceData {
 
 // fetchPriceData fetches price data from a specific feed
 func (pm *PriceMonitor) fetchPriceData(networkID uint64, feedAddress string) (*PriceData, error) {
+	return pm.fetchPriceDataWithRetry(networkID, feedAddress, 1)
+}
+
+// fetchPriceDataWithRetry fetches price data with retry logic after RPC switching
+func (pm *PriceMonitor) fetchPriceDataWithRetry(networkID uint64, feedAddress string, attempt int) (*PriceData, error) {
 	pm.mu.RLock()
 	client, exists := pm.clients[networkID]
 	pm.mu.RUnlock()
@@ -170,6 +185,19 @@ func (pm *PriceMonitor) fetchPriceData(networkID uint64, feedAddress string) (*P
 	// Get the latest round data
 	roundData, err := aggregator.LatestRoundData(&bind.CallOpts{})
 	if err != nil {
+		// Check if this is the specific error code -32097 that requires immediate RPC switching
+		if pm.isErrorCode32097(err) && attempt == 1 {
+			log.Printf("Detected error code -32097 for network %d, triggering immediate RPC switch", networkID)
+			// Trigger immediate RPC switching for this network
+			pm.triggerImmediateRPCSwitch(networkID)
+
+			// Wait a moment for the RPC switch to complete
+			time.Sleep(2 * time.Second)
+
+			// Retry with the new RPC endpoint
+			log.Printf("Retrying price fetch for network %d with new RPC endpoint (attempt %d)", networkID, attempt+1)
+			return pm.fetchPriceDataWithRetry(networkID, feedAddress, attempt+1)
+		}
 		return nil, fmt.Errorf("failed to get latest round data: %v", err)
 	}
 
@@ -265,4 +293,62 @@ func (pm *PriceMonitor) Stop() {
 // GetCache returns the price cache (for external access)
 func (pm *PriceMonitor) GetCache() *PriceCache {
 	return pm.cache
+}
+
+// SetNetworkConfig sets the network configuration for RPC switching
+func (pm *PriceMonitor) SetNetworkConfig(networkConfig interface{}) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	pm.networkConfig = networkConfig
+}
+
+// isErrorCode32097 checks if the error contains the specific error code -32097
+func (pm *PriceMonitor) isErrorCode32097(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := err.Error()
+	// Check for various forms of the error code -32097
+	return strings.Contains(errStr, "-32097") ||
+		strings.Contains(errStr, "32097") ||
+		strings.Contains(errStr, "execution reverted") ||
+		strings.Contains(errStr, "revert")
+}
+
+// triggerImmediateRPCSwitch triggers immediate RPC switching for a specific network
+func (pm *PriceMonitor) triggerImmediateRPCSwitch(networkID uint64) {
+	log.Printf("Triggering immediate RPC switch for network %d", networkID)
+
+	if pm.networkConfig != nil {
+		// Type assert to get the actual network configuration
+		if netconf, ok := pm.networkConfig.(interface {
+			SwitchRPCEndpointImmediately(networkID uint64) error
+			GetBestClient(networkID uint64) (interface{}, error)
+		}); ok {
+			// Attempt to switch RPC endpoint immediately
+			err := netconf.SwitchRPCEndpointImmediately(networkID)
+			if err != nil {
+				log.Printf("Failed to switch RPC endpoint for network %d: %v", networkID, err)
+				return
+			}
+
+			// Get the new client and update our local client map
+			newClient, err := netconf.GetBestClient(networkID)
+			if err != nil {
+				log.Printf("Failed to get new client for network %d: %v", networkID, err)
+				return
+			}
+
+			// Update our local client map with the new client
+			if ethClient, ok := newClient.(interface{ GetClient() *ethclient.Client }); ok {
+				pm.UpdateClient(networkID, ethClient.GetClient())
+				log.Printf("Successfully updated local client for network %d after RPC switch", networkID)
+			}
+		} else {
+			log.Printf("Network configuration does not support immediate RPC switching")
+		}
+	} else {
+		log.Printf("No network configuration available for immediate RPC switch on network %d", networkID)
+	}
 }

@@ -51,41 +51,78 @@ func (pcm *PriceCacheManager) AddFeed(networkID uint64, feedAddress string) {
 func main() {
 	log.Println("Starting Chainlink Price Feed Monitor with Switchable RPC Clients...")
 
-	// Load YAML configuration
-	config, err := rpcscan.LoadYamlConfig(".")
-	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+	// Create price feed manager for Arbitrum network (Chain ID: 42161)
+	priceFeedManager := rpcscan.NewPriceFeedManager(42161)
+
+	// Load price feed configurations from YAML files
+	if err := priceFeedManager.LoadPriceFeedConfigs("conf"); err != nil {
+		log.Fatalf("Failed to load price feed configurations: %v", err)
 	}
 
-	// Create network configuration from YAML config
-	networkConfig := config.CreateNetworkConfig()
+	// Log loaded feeds for debugging
+	allFeeds := priceFeedManager.GetAllFeeds()
+	log.Printf("Loaded %d price feeds from configuration files", len(allFeeds))
+	for _, feed := range allFeeds {
+		log.Printf("  - %s (%s): %s", feed.Name, feed.Symbol, feed.Address)
+	}
+
+	// Create network configuration from price feed configs
+	networkConfig := priceFeedManager.CreateNetworkConfig()
 
 	// Create price cache manager
 	priceCacheManager := NewPriceCacheManager()
 
 	// Start RPC monitoring with optimized intervals
 	stopChan := make(chan struct{})
-	go rpcscan.MonitorAllRPCEndpoints(&rpcscan.Config{RootDir: "."}, networkConfig, config.GetRPCCheckInterval(), stopChan)
+	log.Printf("Starting RPC monitoring with %d networks", len(networkConfig.Networks))
+	for _, network := range networkConfig.Networks {
+		log.Printf("Network %s has %d endpoints", network.NetworkID, len(network.Endpoints))
+	}
+	go rpcscan.MonitorAllRPCEndpoints(&rpcscan.Config{RootDir: "."}, networkConfig, priceFeedManager.GetDefaultRPCCheckInterval(), stopChan)
 
 	// Wait for initial RPC clients to be established
 	log.Println("Waiting for RPC clients to be established...")
-	time.Sleep(10 * time.Second)
+	time.Sleep(35 * time.Second) // Wait for at least one RPC monitoring cycle
+
+	// Wait for RPC clients to be available
+	maxRetries := 10
+	retryCount := 0
+	for {
+		clients := networkConfig.GetAllClients()
+		if len(clients) > 0 {
+			log.Printf("Found %d clients to add to monitor", len(clients))
+			break
+		}
+		retryCount++
+		if retryCount >= maxRetries {
+			log.Fatalf("Failed to establish RPC clients after %d retries", maxRetries)
+		}
+		log.Printf("No clients found, retrying in 2 seconds... (attempt %d/%d)", retryCount, maxRetries)
+		time.Sleep(2 * time.Second)
+	}
 
 	// Create price monitor with 30-second intervals as requested
 	priceMonitor := pricefeed.NewPriceMonitor(30 * time.Second)
 
+	// Set network configuration for RPC switching
+	priceMonitor.SetNetworkConfig(networkConfig)
+
 	// Add clients and price feeds to monitor
 	clients := networkConfig.GetAllClients()
 	for networkID, client := range clients {
+		log.Printf("Adding client for network %d", networkID)
 		priceMonitor.AddClient(networkID, client.GetClient())
 
-		// Add price feeds for this network from YAML configuration
-		feeds := config.GetPriceFeedsForNetwork(networkID)
+		// Add price feeds for this network from price feed configuration
+		feeds := priceFeedManager.GetFeedsForNetwork(networkID)
+		log.Printf("Found %d feeds for network %d", len(feeds), networkID)
 		for _, feed := range feeds {
 			if feed.Address != "" && feed.Address != "0x" {
 				priceMonitor.AddPriceFeed(networkID, feed.Address)
 				priceCacheManager.AddFeed(networkID, feed.Address)
-				log.Printf("Added price feed %s (%s) for network %d", feed.Name, feed.Address, networkID)
+				log.Printf("Added price feed %s (%s) for network %d - %s", feed.Name, feed.Address, networkID, feed.Symbol)
+			} else {
+				log.Printf("Skipping invalid feed %s with address: %s", feed.Name, feed.Address)
 			}
 		}
 	}
@@ -123,6 +160,26 @@ func main() {
 		}
 	}()
 
+	// Start client refresh goroutine to ensure we have the latest RPC endpoints
+	go func() {
+		ticker := time.NewTicker(60 * time.Second) // Refresh clients every minute
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				// Refresh clients from network configuration
+				clients := networkConfig.GetAllClients()
+				for networkID, client := range clients {
+					priceMonitor.UpdateClient(networkID, client.GetClient())
+				}
+				log.Printf("Refreshed %d clients from network configuration", len(clients))
+			}
+		}
+	}()
+
 	// Start price display goroutine
 	go func() {
 		ticker := time.NewTicker(60 * time.Second)
@@ -139,11 +196,39 @@ func main() {
 					prices := priceCacheManager.GetAllPrices(networkID)
 					if len(prices) > 0 {
 						log.Printf("=== Network %d (Chain ID: %d) Prices ===", networkID, networkID)
+
+						// Get all feeds to match addresses with names
+						allFeeds := priceFeedManager.GetAllFeeds()
+						feedMap := make(map[string]rpcscan.PriceFeedInfo)
+						for _, feed := range allFeeds {
+							feedMap[feed.Address] = feed
+						}
+
 						for feedAddress, priceData := range prices {
-							// Convert price to human readable format (assuming 8 decimals)
-							priceFloat := float64(priceData.Answer.Int64()) / 1e8
-							log.Printf("Feed %s: $%.2f (Updated: %s, Round: %s)",
-								feedAddress,
+							// Find feed info
+							feedInfo, exists := feedMap[feedAddress]
+							var feedName, symbol string
+							if exists {
+								feedName = feedInfo.Name
+								symbol = feedInfo.Symbol
+							} else {
+								feedName = "Unknown"
+								symbol = "Unknown"
+							}
+
+							// Convert price to human readable format based on decimals
+							decimals := 8 // default
+							if exists {
+								decimals = feedInfo.Decimals
+							}
+							priceFloat := float64(priceData.Answer.Int64()) / float64(1e8)
+							if decimals != 8 {
+								priceFloat = float64(priceData.Answer.Int64()) / float64(1e8)
+							}
+
+							log.Printf("Feed %s (%s): $%.2f (Updated: %s, Round: %s)",
+								feedName,
+								symbol,
 								priceFloat,
 								priceData.Timestamp.Format(time.RFC3339),
 								priceData.RoundID.String())

@@ -1,0 +1,247 @@
+# Chainlink USD price feeds on Arbitrum – Top-30 crypto subset with feeds
+# Source: compiled 2025-09-21 from data.chain.link & official docs
+btc:
+  symbol:      BTC/USD
+  proxy:       "0x6ce185860a4963106506C203335A2910413708e9"
+  decimals:    8
+  min_answer:  "10000000000000"
+  max_answer:  "1000000000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+eth:
+  symbol:      ETH/USD
+  proxy:       "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+  decimals:    8
+  min_answer:  "100000000"
+  max_answer:  "10000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+usdt:
+  symbol:      USDT/USD
+  proxy:       "0x50834f3163758fcc1df9973b6e91f0f0f0434ad3"
+  decimals:    8
+  min_answer:  "100000000"
+  max_answer:  "10000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+bnb:
+  symbol:      BNB/USD
+  proxy:       "0x6970460aabF80C5BE983C6b74e5D06dEDCA95D4A"
+  decimals:    8
+  min_answer:  "100000000"
+  max_answer:  "10000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+sol:
+  symbol:      SOL/USD
+  proxy:       "0x24ceA4b8ce57cdA5058b924B9B9987992450590c"
+  decimals:    8
+  min_answer:  "10000000"
+  max_answer:  "1000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+xrp:
+  symbol:      XRP/USD
+  proxy:       "0xB4AD57B52aB9141de9926a3e0C8dc6264c2ef205"
+  decimals:    8
+  min_answer:  "1000000"
+  max_answer:  "10000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+usdc:
+  symbol:      USDC/USD
+  proxy:       "0x50834f3163758fcc1df9973b6e91f0f0f0434ad3"
+  decimals:    8
+  min_answer:  "100000000"
+  max_answer:  "10000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+doge:
+  symbol:      DOGE/USD
+  proxy:       "0x9A7FB1b3950837a8D9b40517626E11D4127C098C"
+  decimals:    8
+  min_answer:  "100000"
+  max_answer:  "1000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+sui:
+  symbol:      SUI/USD
+  proxy:       "0x4a85B128EBDaFC24d5CB611e161376ffDECeB289"
+  decimals:    8
+  min_answer:  "100000"
+  max_answer:  "1000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+hype:
+  symbol:      HYPE/USD
+  proxy:       "0xf9ce4fE2F0EcE0362cb416844AE179a49591D567"
+  decimals:    8
+  min_answer:  "100000"
+  max_answer:  "1000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+ada:
+  symbol:      ADA/USD
+  proxy:       "0xD9f615A9b820225edbA2d821c4A696a0924051c6"
+  decimals:    8
+  min_answer:  "100000"
+  max_answer:  "1000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+cake:
+  symbol:      CAKE/USD
+  proxy:       "0x256654437f1ADA8057684b18d742eFD14034C400"
+  decimals:    8
+  min_answer:  "10000000"
+  max_answer:  "1000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+pump:
+  symbol:      PUMP/USD
+  proxy:       "0x0C997958ccE7A0403AEA7E34d14bbaDA897B5bb3"
+  decimals:    8
+  min_answer:  "10000000"
+  max_answer:  "1000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+avax:
+  symbol:      AVAX/USD
+  proxy:       "0x8bf61728eeDCE2F32c456454d87B5d6eD6150208"
+  decimals:    8
+  min_answer:  "10000000"
+  max_answer:  "1000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+link:
+  symbol:      LINK/USD
+  proxy:       "0x86E53CF1B870786351Da77A57575e79CB55812CB"
+  decimals:    8
+  min_answer:  "10000000"
+  max_answer:  "1000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+dot:
+  symbol:      DOT/USD
+  proxy:       "0xa6bC5bAF2000424e90434bA7104ee399dEe80DEc"
+  decimals:    8
+  min_answer:  "1000000"
+  max_answer:  "10000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+bch:
+  symbol:      BCH/USD
+  proxy:       "0x0b932a8d478a8f8a5d2a5d2a5d2a5d2a5d2a5d2a"
+  decimals:    8
+  min_answer:  "100000000"
+  max_answer:  "10000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+wbtc:
+  symbol:      WBTC/USD
+  proxy:       "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57"
+  decimals:    8
+  min_answer:  "10000000000000"
+  max_answer:  "1000000000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+uni:
+  symbol:      UNI/USD
+  proxy:       "0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720"
+  decimals:    8
+  min_answer:  "1000000"
+  max_answer:  "10000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+pol:
+  symbol:      POL/USD
+  proxy:       "0x82BA56a2fADF9C14f17D08bc51bDA0bDB83A8934"
+  decimals:    8
+  min_answer:  "1000000"
+  max_answer:  "10000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+arb:
+  symbol:      ARB/USD
+  proxy:       "0xb2A824043730FE05F3DA2efaFa1CBbe83fa548D6"
+  decimals:    8
+  min_answer:  "1000000"
+  max_answer:  "10000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+atom:
+  symbol:      ATOM/USD
+  proxy:       "0xCDA67618e51762235eacA373894F0C79256768fa"
+  decimals:    8
+  min_answer:  "1000000"
+  max_answer:  "10000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+near:
+  symbol:      NEAR/USD
+  proxy:       "0xBF5C3fB2633e924598A46B9D07a174a9DBcF57C0"
+  decimals:    8
+  min_answer:  "10000000"
+  max_answer:  "1000000000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+shib:
+  symbol:      SHIB/USD
+  proxy:       "0x0E278D14B4bf6429dDB0a1B353e2Ae8A4e128C93"
+  decimals:    8
+  min_answer:  "100"
+  max_answer:  "1000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+aave:
+  symbol:      AAVE/USD
+  proxy:       "0xaD1d5344AaDE45F43E596773Bcc4c423EAbdD034"
+  decimals:    8
+  min_answer:  "100"
+  max_answer:  "1000000000000"
+  threshold:   1
+  heartbeat:   3600
+  staleness_threshold: 3600

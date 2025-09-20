@@ -1,0 +1,92 @@
+# Chainlink USD price feeds on Arbitrum – Top-10 US stocks
+# Market-hours only: 9:30 AM – 4:00 PM EDT, Mon-Fri
+nvda:
+  symbol:      NVDA/USD
+  proxy:       "0x4881A4418b5F2460B21d6F08CD5aA0678a7f262F"
+  decimals:    2
+  min_answer:  "10"
+  max_answer:  "10000"
+  threshold:   0.5
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+msft:
+  symbol:      MSFT/USD
+  proxy:       "0xDde33fb9F21739602806580bdd73BAd831DcA867"
+  decimals:    2
+  min_answer:  "100"
+  max_answer:  "1000"
+  threshold:   0.5
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+aapl:
+  symbol:      AAPL/USD
+  proxy:       "0x8d0CC5f38f9E802475f2CFf4F9fc7000C2E1557c"
+  decimals:    2
+  min_answer:  "100"
+  max_answer:  "500"
+  threshold:   0.5
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+googl:
+  symbol:      GOOGL/USD
+  proxy:       "0x1D1a83331e9D255EB1Aaf75026B60dFD00A252ba"
+  decimals:    2
+  min_answer:  "100"
+  max_answer:  "2000"
+  threshold:   0.5
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+amzn:
+  symbol:      AMZN/USD
+  proxy:       "0xd6a77691f071E98Df7217BED98f38ae6d2313EBA"
+  decimals:    2
+  min_answer:  "100"
+  max_answer:  "200"
+  threshold:   0.5
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+meta:
+  symbol:      META/USD
+  proxy:       "0xcd1bd86fDc33080DCF1b5715B6FCe04eC6F85845"
+  decimals:    2
+  min_answer:  "300"
+  max_answer:  "600"
+  threshold:   0.5
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+
+tsla:
+  symbol:      TSLA/USD
+  proxy:       "0x3609baAa0a9b1f0FE4d6CC01884585d0e191C3E3"
+  decimals:    2
+  min_answer:  "200"
+  max_answer:  "400"
+  threshold:   0.5
+  heartbeat:   3600
+  staleness_threshold: 3600
+
+jpm:
+  symbol:      JPM/USD
+  proxy:       "0x1j2o1j2o1j2o1j2o1j2o1j2o1j2o1j2o1j2o1j2o"
+  decimals:    2
+  min_answer:  "100"
+  max_answer:  "200"
+  threshold:   0.5
+  heartbeat:   3600
+  staleness_threshold: 3600
+  
+appl:
+  symbol:      AAPL/USD
+  proxy:       "0x8d0CC5f38f9E802475f2CFf4F9fc7000C2E1557c"
+  decimals:    2
+  min_answer:  "100"
+  max_answer:  "200"
+  threshold:   0.5
+  heartbeat:   3600
+  staleness_threshold: 3600

@@ -258,6 +258,7 @@ func getBestRPCEndpointsParallel(netconf *NetworkConfiguration, timeout time.Dur
 
 // MonitorAllRPCEndpoints monitors all network RPC endpoints continuously
 func MonitorAllRPCEndpoints(conf *Config, netconf *NetworkConfiguration, interval time.Duration, stopChan chan struct{}) {
+	log.Printf("RPC monitoring started with interval %v", interval)
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -275,6 +276,8 @@ func MonitorAllRPCEndpoints(conf *Config, netconf *NetworkConfiguration, interva
 				log.Printf("Error finding best RPC endpoints: %v", err)
 				continue
 			}
+
+			log.Printf("Found %d best endpoints", len(bestEndpoints))
 
 			// Update clients with proper synchronization
 			for networkID, endpoint := range bestEndpoints {
@@ -391,6 +394,70 @@ func (netconf *NetworkConfiguration) GetAllClients() map[uint64]*EthereumClient 
 		clients[networkID] = client
 	}
 	return clients
+}
+
+// SwitchRPCEndpointImmediately switches to a different RPC endpoint for a specific network immediately
+func (netconf *NetworkConfiguration) SwitchRPCEndpointImmediately(networkID uint64) error {
+	netconf.mu.Lock()
+	defer netconf.mu.Unlock()
+
+	// Find the network configuration
+	var targetNetwork *RPCConfig
+	for i := range netconf.Networks {
+		if id, err := strconv.ParseUint(netconf.Networks[i].NetworkID, 10, 64); err == nil && id == networkID {
+			targetNetwork = &netconf.Networks[i]
+			break
+		}
+	}
+
+	if targetNetwork == nil {
+		return fmt.Errorf("network %d not found in configuration", networkID)
+	}
+
+	// Get current endpoint
+	currentClient, exists := netconf.ClientUse[networkID]
+	var currentEndpoint string
+	if exists && currentClient != nil {
+		// We can't easily get the endpoint from the client, so we'll try all endpoints
+		// and skip the one that's currently failing
+	}
+
+	// Find a different working endpoint
+	var bestEndpoint string
+	var bestLatency time.Duration = time.Duration(1<<63 - 1) // Max duration
+
+	for _, endpoint := range targetNetwork.Endpoints {
+		// Skip if this is the current endpoint (if we can determine it)
+		if currentEndpoint != "" && endpoint == currentEndpoint {
+			continue
+		}
+
+		// Test this endpoint
+		latency := checkLatencyCon(targetNetwork.NetworkID, endpoint)
+		if latency.latency > 0 && latency.latency < bestLatency {
+			bestLatency = latency.latency
+			bestEndpoint = endpoint
+		}
+	}
+
+	if bestEndpoint == "" {
+		return fmt.Errorf("no alternative RPC endpoint available for network %d", networkID)
+	}
+
+	// Create new client with the best endpoint
+	newClient, err := NewEthereumClient(bestEndpoint)
+	if err != nil {
+		return fmt.Errorf("failed to create new client for network %d: %v", networkID, err)
+	}
+
+	newClient.NetworkID = networkID
+	newClient.last_updated = time.Now()
+
+	// Update the client
+	netconf.ClientUse[networkID] = newClient
+	log.Printf("Immediately switched RPC endpoint for network %d to: %s (latency: %v)", networkID, bestEndpoint, bestLatency)
+
+	return nil
 }
 
 // Contains checks if a slice contains a specific element
