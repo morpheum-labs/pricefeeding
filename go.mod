@@ -1,11 +1,10 @@
-module github.com/aelmanaa/chainlink-price-feed-golang
+module github.com/morpheum/chainlink-price-feed-golang
 
 go 1.25
 
 require (
 	github.com/ethereum/go-ethereum v1.10.17
 	github.com/google/uuid v1.2.0
-	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
 	gopkg.in/yaml.v3 v3.0.1
 )
 

@@ -4,7 +4,7 @@
 BINARY_NAME=chainlink-price-feed
 BUILD_DIR=build
 MAIN_FILE=main.go
-MODULE_NAME=github.com/aelmanaa/chainlink-price-feed-golang
+MODULE_NAME=github.com/morpheum/chainlink-price-feed-golang
 
 # Go build flags
 LDFLAGS=-ldflags "-X main.Version=$(shell git describe --tags --always --dirty) -X main.BuildTime=$(shell date -u '+%Y-%m-%d_%H:%M:%S')"

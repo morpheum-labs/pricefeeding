@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aelmanaa/chainlink-price-feed-golang/pricefeed"
-	"github.com/aelmanaa/chainlink-price-feed-golang/rpcscan"
+	"github.com/morpheum/chainlink-price-feed-golang/pricefeed"
+	"github.com/morpheum/chainlink-price-feed-golang/rpcscan"
 )
 
 // PriceCacheManager manages the local price cache with persistence
@@ -55,7 +55,7 @@ func main() {
 	priceFeedManager := rpcscan.NewPriceFeedManager(42161)
 
 	// Load price feed configurations from YAML files
-	if err := priceFeedManager.LoadPriceFeedConfigs("conf"); err != nil {
+	if err := priceFeedManager.LoadConfig("conf"); err != nil {
 		log.Fatalf("Failed to load price feed configurations: %v", err)
 	}
 

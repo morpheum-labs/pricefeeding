@@ -43,8 +43,8 @@ func NewPriceFeedManager(networkID uint64) *PriceFeedManager {
 	}
 }
 
-// LoadPriceFeedConfigs loads price feed configurations from YAML files
-func (pfm *PriceFeedManager) LoadPriceFeedConfigs(configDir string) error {
+// LoadConfig loads price feed configurations from YAML files
+func (pfm *PriceFeedManager) LoadConfig(configDir string) error {
 	// Load crypto feeds
 	cryptoPath := filepath.Join(configDir, "crytos.yaml")
 	if err := pfm.loadConfigFile(cryptoPath, &pfm.CryptoFeeds); err != nil {
@@ -147,8 +147,76 @@ func (pfm *PriceFeedManager) GetFeedsForNetwork(networkID uint64) []PriceFeedInf
 	return pfm.GetAllFeeds()
 }
 
-// CreateNetworkConfig creates a NetworkConfiguration from the price feed configs
+// CreateNetworkConfig creates a NetworkConfiguration from the price feed configs and extraRpcs.json
 func (pfm *PriceFeedManager) CreateNetworkConfig() *NetworkConfiguration {
+	// Try to load extraRpcs.json file first
+	extraRPCs, err := LoadExtraRPCs("conf/extraRpcs.json")
+	if err != nil {
+		// Fallback to original behavior if extraRpcs.json is not available
+		return pfm.createNetworkConfigFromFeeds()
+	}
+
+	var networks []RPCConfig
+
+	// Create networks from extraRpcs.json
+	for chainID, rpcConfig := range *extraRPCs {
+		if len(rpcConfig.RPCs) == 0 {
+			continue
+		}
+
+		// Extract RPC URLs
+		endpoints := extractRPCURLs(rpcConfig.RPCs)
+		if len(endpoints) == 0 {
+			continue
+		}
+
+		// Get network info
+		networkInfo := getNetworkInfo(chainID)
+
+		// Convert chainID to uint64 for price feed lookup
+		chainIDUint, err := strconv.ParseUint(chainID, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		// Get price feeds for this network (only if it matches our configured network)
+		feeds := make(map[string]string)
+		if chainIDUint == pfm.NetworkID {
+			// Add crypto feeds to approval source
+			for name, config := range pfm.CryptoFeeds {
+				feeds[name] = config.Proxy
+			}
+
+			// Add stock feeds to approval source
+			for name, config := range pfm.StockFeeds {
+				feeds[name] = config.Proxy
+			}
+		}
+
+		// Create RPC config
+		networks = append(networks, RPCConfig{
+			NetworkID:    chainID,
+			NameStd:      networkInfo.NameStd,
+			NameCoinr:    networkInfo.NameCoinr,
+			WrappedToken: networkInfo.WrappedToken,
+			Endpoints:    endpoints,
+			ApprovalSrc:  feeds,
+		})
+	}
+
+	// If no networks were loaded from extraRpcs.json, fallback to original behavior
+	if len(networks) == 0 {
+		return pfm.createNetworkConfigFromFeeds()
+	}
+
+	return &NetworkConfiguration{
+		Networks:  networks,
+		ClientUse: make(map[uint64]*EthereumClient),
+	}
+}
+
+// createNetworkConfigFromFeeds creates a NetworkConfiguration from the price feed configs (fallback method)
+func (pfm *PriceFeedManager) createNetworkConfigFromFeeds() *NetworkConfiguration {
 	// Create approval source map with all feeds
 	approvalSrc := make(map[string]string)
 
