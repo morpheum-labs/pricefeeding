@@ -140,7 +140,7 @@ func main() {
 
 	// Start price cache updater goroutine
 	go func() {
-		ticker := time.NewTicker(30 * time.Second)
+		ticker := time.NewTicker(15 * time.Second)
 		defer ticker.Stop()
 
 		for {
@@ -162,7 +162,7 @@ func main() {
 
 	// Start client refresh goroutine to ensure we have the latest RPC endpoints
 	go func() {
-		ticker := time.NewTicker(60 * time.Second) // Refresh clients every minute
+		ticker := time.NewTicker(15 * time.Second) // Refresh clients every minute
 		defer ticker.Stop()
 
 		for {
