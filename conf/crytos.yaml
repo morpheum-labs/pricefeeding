@@ -120,7 +120,7 @@ cake:
 pump:
   symbol:      PUMP/USD
   proxy:       "0x0C997958ccE7A0403AEA7E34d14bbaDA897B5bb3"
-  decimals:    8
+  decimals:    18
   min_answer:  "10000000"
   max_answer:  "1000000000000000000"
   threshold:   1

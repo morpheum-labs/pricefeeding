@@ -70,16 +70,6 @@ tsla:
   threshold:   0.5
   heartbeat:   3600
   staleness_threshold: 3600
-
-jpm:
-  symbol:      JPM/USD
-  proxy:       "0x1j2o1j2o1j2o1j2o1j2o1j2o1j2o1j2o1j2o1j2o"
-  decimals:    2
-  min_answer:  "100"
-  max_answer:  "200"
-  threshold:   0.5
-  heartbeat:   3600
-  staleness_threshold: 3600
   
 appl:
   symbol:      AAPL/USD

@@ -1,14 +1,38 @@
 package rpcscan
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/aelmanaa/chainlink-price-feed-golang/shared"
 	"gopkg.in/yaml.v3"
 )
+
+// ExtraRPCConfig represents the structure of the extraRpcs.json file
+type ExtraRPCConfig struct {
+	RPCs []interface{} `json:"rpcs"`
+}
+
+// ExtraRPCsData represents the complete structure of extraRpcs.json
+type ExtraRPCsData map[string]ExtraRPCConfig
+
+// RPCEndpoint represents a single RPC endpoint with tracking info
+type RPCEndpoint struct {
+	URL             string `json:"url"`
+	Tracking        string `json:"tracking"`
+	TrackingDetails string `json:"trackingDetails"`
+}
+
+// NetworkInfo contains network metadata for common networks
+type NetworkInfo struct {
+	NameStd      string
+	NameCoinr    string
+	WrappedToken string
+}
 
 // ExtendedConfig extends the shared Configuration with RPC-specific settings
 type ExtendedConfig struct {
@@ -110,6 +134,91 @@ func validateConfig(config *ExtendedConfig) error {
 	return nil
 }
 
+// LoadExtraRPCs loads the extraRpcs.json file
+func LoadExtraRPCs(filePath string) (*ExtraRPCsData, error) {
+	fileContent, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read extraRpcs.json: %w", err)
+	}
+
+	var extraRPCs ExtraRPCsData
+	if err := json.Unmarshal(fileContent, &extraRPCs); err != nil {
+		return nil, fmt.Errorf("failed to parse extraRpcs.json: %w", err)
+	}
+
+	return &extraRPCs, nil
+}
+
+// getNetworkInfo returns network metadata for common networks
+func getNetworkInfo(chainID string) NetworkInfo {
+	networkMap := map[string]NetworkInfo{
+		"1": {
+			NameStd:      "Ethereum Mainnet",
+			NameCoinr:    "ETH",
+			WrappedToken: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+		},
+		"42161": {
+			NameStd:      "Arbitrum Mainnet",
+			NameCoinr:    "ARB",
+			WrappedToken: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+		},
+		"137": {
+			NameStd:      "Polygon Mainnet",
+			NameCoinr:    "MATIC",
+			WrappedToken: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+		},
+		"56": {
+			NameStd:      "BSC Mainnet",
+			NameCoinr:    "BNB",
+			WrappedToken: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+		},
+		"10": {
+			NameStd:      "Optimism Mainnet",
+			NameCoinr:    "ETH",
+			WrappedToken: "0x4200000000000000000000000000000000000006",
+		},
+		"250": {
+			NameStd:      "Fantom Mainnet",
+			NameCoinr:    "FTM",
+			WrappedToken: "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
+		},
+		"43114": {
+			NameStd:      "Avalanche Mainnet",
+			NameCoinr:    "AVAX",
+			WrappedToken: "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7",
+		},
+	}
+
+	if info, exists := networkMap[chainID]; exists {
+		return info
+	}
+
+	// Default fallback for unknown networks
+	return NetworkInfo{
+		NameStd:      fmt.Sprintf("Network %s", chainID),
+		NameCoinr:    "UNKNOWN",
+		WrappedToken: "",
+	}
+}
+
+// extractRPCURLs extracts RPC URLs from the mixed array format
+func extractRPCURLs(rpcs []interface{}) []string {
+	var urls []string
+	for _, rpc := range rpcs {
+		switch v := rpc.(type) {
+		case string:
+			// Simple string URL
+			urls = append(urls, v)
+		case map[string]interface{}:
+			// Object with URL field
+			if url, ok := v["url"].(string); ok {
+				urls = append(urls, url)
+			}
+		}
+	}
+	return urls
+}
+
 // GetRPCCheckInterval returns the RPC check interval as a duration
 func (c *ExtendedConfig) GetRPCCheckInterval() time.Duration {
 	return time.Duration(c.Monitoring.RPCCheckInterval) * time.Second
@@ -183,8 +292,68 @@ func (c *ExtendedConfig) GetNetworkRPCs(networkID uint64) []string {
 	}
 }
 
-// CreateNetworkConfig creates a NetworkConfiguration from the YAML config
+// CreateNetworkConfig creates a NetworkConfiguration from the YAML config and extraRpcs.json
 func (c *ExtendedConfig) CreateNetworkConfig() *NetworkConfiguration {
+	var networks []RPCConfig
+
+	// Try to load extraRpcs.json file
+	extraRPCs, err := LoadExtraRPCs("conf/extraRpcs.json")
+	if err != nil {
+		// Fallback to original behavior if extraRpcs.json is not available
+		return c.createNetworkConfigFromYAML()
+	}
+
+	// Create networks from extraRpcs.json
+	for chainID, rpcConfig := range *extraRPCs {
+		if len(rpcConfig.RPCs) == 0 {
+			continue
+		}
+
+		// Extract RPC URLs
+		endpoints := extractRPCURLs(rpcConfig.RPCs)
+		if len(endpoints) == 0 {
+			continue
+		}
+
+		// Get network info
+		networkInfo := getNetworkInfo(chainID)
+
+		// Convert chainID to uint64 for price feed lookup
+		chainIDUint, err := strconv.ParseUint(chainID, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		// Get price feeds for this network
+		feeds := make(map[string]string)
+		for _, feed := range c.GetPriceFeedsForNetwork(chainIDUint) {
+			feeds[feed.Name] = feed.Address
+		}
+
+		// Create RPC config
+		networks = append(networks, RPCConfig{
+			NetworkID:    chainID,
+			NameStd:      networkInfo.NameStd,
+			NameCoinr:    networkInfo.NameCoinr,
+			WrappedToken: networkInfo.WrappedToken,
+			Endpoints:    endpoints,
+			ApprovalSrc:  feeds,
+		})
+	}
+
+	// If no networks were loaded from extraRpcs.json, fallback to YAML config
+	if len(networks) == 0 {
+		return c.createNetworkConfigFromYAML()
+	}
+
+	return &NetworkConfiguration{
+		Networks:  networks,
+		ClientUse: make(map[uint64]*EthereumClient),
+	}
+}
+
+// createNetworkConfigFromYAML creates a NetworkConfiguration from the YAML config (fallback method)
+func (c *ExtendedConfig) createNetworkConfigFromYAML() *NetworkConfiguration {
 	var networks []RPCConfig
 
 	// Add Ethereum mainnet
