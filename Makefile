@@ -123,49 +123,11 @@ install: build
 	go install $(BUILD_FLAGS) $(MAIN_FILE)
 	@echo "✅ Installed to $(GOPATH)/bin/$(BINARY_NAME)"
 
-# Create a test script for network configuration
+# Test network configuration loading
 .PHONY: test-networks
 test-networks:
 	@echo "Testing network configuration..."
-	@echo "package main" > test_networks.go
-	@echo "" >> test_networks.go
-	@echo "import (" >> test_networks.go
-	@echo "	\"fmt\"" >> test_networks.go
-	@echo "	\"log\"" >> test_networks.go
-	@echo "	\"$(MODULE_NAME)/rpcscan\"" >> test_networks.go
-	@echo ")" >> test_networks.go
-	@echo "" >> test_networks.go
-	@echo "func main() {" >> test_networks.go
-	@echo "	// Test loading extraRpcs.json" >> test_networks.go
-	@echo "	extraRPCs, err := rpcscan.LoadExtraRPCs(\"conf/extraRpcs.json\")" >> test_networks.go
-	@echo "	if err != nil {" >> test_networks.go
-	@echo "		log.Fatalf(\"Failed to load extraRpcs.json: %v\", err)" >> test_networks.go
-	@echo "	}" >> test_networks.go
-	@echo "" >> test_networks.go
-	@echo "	fmt.Printf(\"✅ Loaded %d networks from extraRpcs.json\\n\", len(*extraRPCs))" >> test_networks.go
-	@echo "" >> test_networks.go
-	@echo "	// Test creating network config" >> test_networks.go
-	@echo "	config := &rpcscan.ExtendedConfig{}" >> test_networks.go
-	@echo "	networkConfig := config.CreateNetworkConfig()" >> test_networks.go
-	@echo "	" >> test_networks.go
-	@echo "	fmt.Printf(\"✅ Created network configuration with %d networks\\n\", len(networkConfig.Networks))" >> test_networks.go
-	@echo "	" >> test_networks.go
-	@echo "	// Show sample networks" >> test_networks.go
-	@echo "	count := 0" >> test_networks.go
-	@echo "	for _, network := range networkConfig.Networks {" >> test_networks.go
-	@echo "		if count >= 5 {" >> test_networks.go
-	@echo "			break" >> test_networks.go
-	@echo "		}" >> test_networks.go
-	@echo "		fmt.Printf(\"  - %s (%s): %d endpoints\\n\", network.NameStd, network.NetworkID, len(network.Endpoints))" >> test_networks.go
-	@echo "		count++" >> test_networks.go
-	@echo "	}" >> test_networks.go
-	@echo "	" >> test_networks.go
-	@echo "	if len(networkConfig.Networks) > 5 {" >> test_networks.go
-	@echo "		fmt.Printf(\"  ... and %d more networks\\n\", len(networkConfig.Networks)-5)" >> test_networks.go
-	@echo "	}" >> test_networks.go
-	@echo "}" >> test_networks.go
 	go run test_networks.go
-	rm -f test_networks.go
 
 # Create a development environment setup
 .PHONY: dev-setup
