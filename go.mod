@@ -1,6 +1,6 @@
-module github.com/morpheum/chainlink-price-feed-golang
+module github.com/morpheum-labs/pricefeeding
 
-go 1.25
+go 1.25.1
 
 require (
 	github.com/ethereum/go-ethereum v1.10.17
