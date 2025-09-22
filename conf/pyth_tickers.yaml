@@ -1,0 +1,290 @@
+# Pyth Network USD price feeds
+# Source: Pyth Network official feeds (22-Sep-2025)
+# Precision decimals based on typical Pyth Network standards
+
+btc:
+  symbol:      BTC/USD
+  price_id:    "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
+  decimals:    5
+  description: "Bitcoin / US Dollar"
+  category:    "crypto"
+
+eth:
+  symbol:      ETH/USD
+  price_id:    "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"
+  decimals:    5
+  description: "Ethereum / US Dollar"
+  category:    "crypto"
+
+tslax:
+  symbol:      TSLAX/USD
+  price_id:    "47a156470288850a440df3a6ce85a55917b813a19bb5b31128a33a986566a362"
+  decimals:    5
+  description: "Tesla / US Dollar"
+  category:    "equity"
+
+mstrx:
+  symbol:      MSTRX/USD
+  price_id:    "53f95ba4e23ed15ea56083e2ee9a5eec48055d6f59033d4bb95f1ca2a2349c28"
+  decimals:    5
+  description: "MicroStrategy / US Dollar"
+  category:    "equity"
+
+xau:
+  symbol:      XAU/USD
+  price_id:    "765d2ba906dbc32ca17cc11f5310a89e9ee1f6420508c63861f2f8ba4ee34bb2"
+  decimals:    5
+  description: "Gold / US Dollar"
+  category:    "metal"
+
+xag:
+  symbol:      XAG/USD
+  price_id:    "f2fb02c32b055c805e7238d628e5e9dadef274376114eb1f012337cabe93871e"
+  decimals:    5
+  description: "Silver / US Dollar"
+  category:    "metal"
+
+nvdax:
+  symbol:      NVDAX/USD
+  price_id:    "4244d07890e4610f46bbde67de8f43a4bf8b569eebe904f136b469f148503b7f"
+  decimals:    5
+  description: "NVIDIA / US Dollar"
+  category:    "equity"
+
+virtual:
+  symbol:      VIRTUAL/USD
+  price_id:    "8132e3eb1dac3e56939a16ff83848d194345f6688bff97eb1c8bd462d558802b"
+  decimals:    5
+  description: "Virtual / US Dollar"
+  category:    "crypto"
+
+fartcoin:
+  symbol:      FARTCOIN/USD
+  price_id:    "58cd29ef0e714c5affc44f269b2c1899a52da4169d7acc147b9da692e6953608"
+  decimals:    5
+  description: "Fartcoin / US Dollar"
+  category:    "crypto"
+
+aster:
+  symbol:      ASTER/USD
+  price_id:    "a903b5a82cb572397e3d47595d2889cf80513f5b4cf7a36b513ae10cc8b1e338"
+  decimals:    5
+  description: "Aster / US Dollar"
+  category:    "crypto"
+
+hype:
+  symbol:      HYPE/USD
+  price_id:    "4279e31cc369bbcc2faf022b382b080e32a8e689ff20fbc530d2a603eb6cd98b"
+  decimals:    5
+  description: "Hype / US Dollar"
+  category:    "crypto"
+
+hyper:
+  symbol:      HYPER/USD
+  price_id:    "752f22bbcdd24a1c5e0b0149e0196c076b8e1f088cdb60b6d7d7cd41787e7631"
+  decimals:    5
+  description: "Hyper / US Dollar"
+  category:    "crypto"
+
+xrp:
+  symbol:      XRP/USD
+  price_id:    "ec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8"
+  decimals:    5
+  description: "Ripple / US Dollar"
+  category:    "crypto"
+
+uni:
+  symbol:      UNI/USD
+  price_id:    "78d185a741d07edb3412b09008b7c5cfb9bbbd7d568bf00ba737b456ba171501"
+  decimals:    5
+  description: "Uniswap / US Dollar"
+  category:    "crypto"
+
+sui:
+  symbol:      SUI/USD
+  price_id:    "23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744"
+  decimals:    5
+  description: "Sui / US Dollar"
+  category:    "crypto"
+
+# avnt:  # not yet live – uncomment when Pyth releases
+#   symbol:      AVNT/USD
+#   price_id:    "TBD"
+#   decimals:    5
+#   description: "Aventus / US Dollar"
+#   category:    "crypto"
+
+bnb:
+  symbol:      BNB/USD
+  price_id:    "2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f"
+  decimals:    5
+  description: "Binance Coin / US Dollar"
+  category:    "crypto"
+
+# zora:  # not yet live – uncomment when Pyth releases
+#   symbol:      ZORA/USD
+#   price_id:    "TBD"
+#   decimals:    5
+#   description: "Zora / US Dollar"
+#   category:    "crypto"
+
+eigen:
+  symbol:      EIGEN/USD
+  price_id:    "c65db025687356496e8653d0d6608eec64ce2d96e2e28c530e574f0e4f712380"
+  decimals:    5
+  description: "EigenLayer / US Dollar"
+  category:    "crypto"
+
+tia:
+  symbol:      TIA/USD
+  price_id:    "09f7c1d7dfbb7df2b8fe3d3d87ee94a2259d212da4f30c1f0540d066dfa44723"
+  decimals:    5
+  description: "Celestia / US Dollar"
+  category:    "crypto"
+
+fil:
+  symbol:      FIL/USD
+  price_id:    "150ac9b959aee0051e4091f0ef5216d941f590e1c5e7f91cf7635b5c11628c0e"
+  decimals:    5
+  description: "Filecoin / US Dollar"
+  category:    "crypto"
+
+sol:
+  symbol:      SOL/USD
+  price_id:    "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d"
+  decimals:    5
+  description: "Solana / US Dollar"
+  category:    "crypto"
+
+ada:
+  symbol:      ADA/USD
+  price_id:    "2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d"
+  decimals:    5
+  description: "Cardano / US Dollar"
+  category:    "crypto"
+
+ton:
+  symbol:      TON/USD
+  price_id:    "8963217838ab4cf5cadc172203c1f0b763fbaa45f346d8ee50ba994bbcac3026"
+  decimals:    5
+  description: "Toncoin / US Dollar"
+  category:    "crypto"
+
+sei:
+  symbol:      SEI/USD
+  price_id:    "53614f1cb0c031d4af66c04cb9c756234adad0e1cee85303795091499a4084eb"
+  decimals:    5
+  description: "Sei / US Dollar"
+  category:    "crypto"
+
+ondo:
+  symbol:      ONDO/USD
+  price_id:    "d40472610abe56d36d065a0cf889fc8f1dd9f3b7f2a478231a5fc6df07ea5ce3"
+  decimals:    5
+  description: "Ondo Finance / US Dollar"
+  category:    "crypto"
+
+render:
+  symbol:      RENDER/USD
+  price_id:    "3d4a2bd9535be6ce8059d75eadeba507b043257321aa544717c56fa19b49e35d"
+  decimals:    5
+  description: "Render / US Dollar"
+  category:    "crypto"
+
+link:
+  symbol:      LINK/USD
+  price_id:    "8ac0c70fff57e9aefdf5edf44b51d62c2d433653cbb2cf5cc06bb115af04d221"
+  decimals:    5
+  description: "Chainlink / US Dollar"
+  category:    "crypto"
+
+ena:
+  symbol:      ENA/USD
+  price_id:    "b7910ba7322db020416fcac28b48c01212fd9cc8fbcbaf7d30477ed8605f6bd4"
+  decimals:    5
+  description: "Ethena / US Dollar"
+  category:    "crypto"
+
+ens:
+  symbol:      ENS/USD
+  price_id:    "b98ab6023650bd2edc026b983fb7c2f8fa1020286f1ba6ecf3f4322cd83b72a6"
+  decimals:    5
+  description: "Ethereum Name Service / US Dollar"
+  category:    "crypto"
+
+gmx:
+  symbol:      GMX/USD
+  price_id:    "b962539d0fcb272a494d65ea56f94851c2bcf8823935da05bd628916e2e9edbf"
+  decimals:    5
+  description: "GMX / US Dollar"
+  category:    "crypto"
+
+gmt:
+  symbol:      GMT/USD
+  price_id:    "baa284eaf23edf975b371ba2818772f93dbae72836bbdea28b07d40f3cf8b485"
+  decimals:    5
+  description: "STEPN / US Dollar"
+  category:    "crypto"
+
+ltc:
+  symbol:      LTC/USD
+  price_id:    "6e3f3fa8253588df9326580180233eb791e03b443a3ba7a1d892e73874e19a54"
+  decimals:    5
+  description: "Litecoin / US Dollar"
+  category:    "crypto"
+
+# trump:  # not yet live – uncomment when Pyth releases
+#   symbol:      TRUMP/USD
+#   price_id:    "TBD"
+#   decimals:    5
+#   description: "Official Trump / US Dollar"
+#   category:    "crypto"
+
+# wlfi:  # not yet live – uncomment when Pyth releases
+#   symbol:      WLFI/USD
+#   price_id:    "TBD"
+#   decimals:    5
+#   description: "World Liberty Financial / US Dollar"
+#   category:    "crypto"
+
+pyth:
+  symbol:      PYTH/USD
+  price_id:    "0bbf28e9a841a1cc788f6a361b17ca072d0ea3098a1e5df1c3922d06719579ff"
+  decimals:    5
+  description: "Pyth Network / US Dollar"
+  category:    "crypto"
+
+inj:
+  symbol:      INJ/USD
+  price_id:    "7a5bc1d2b56ad029048cd63964b3ad2776eadf812edc1a43a31406cb54bff592"
+  decimals:    5
+  description: "Injective / US Dollar"
+  category:    "crypto"
+
+dydx:
+  symbol:      DYDX/USD
+  price_id:    "6489800bb8974169adfe35937bf6736507097d13c190d760c557108c7e93a81b"
+  decimals:    5
+  description: "dYdX / US Dollar"
+  category:    "crypto"
+
+aave:
+  symbol:      AAVE/USD
+  price_id:    "2b9ab1e972a281585084148ba1389800799bd4be63b957507db1349314e47445"
+  decimals:    5
+  description: "Aave / US Dollar"
+  category:    "crypto"
+
+arb:
+  symbol:      ARB/USD
+  price_id:    "3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5"
+  decimals:    5
+  description: "Arbitrum / US Dollar"
+  category:    "crypto"
+
+wld:
+  symbol:      WLD/USD
+  price_id:    "d6835ad1f773de4a378115eb6824bd0c0e42d84d1c84d9750e853fb6b6c7794a"
+  decimals:    5
+  description: "Worldcoin / US Dollar"
+  category:    "crypto"

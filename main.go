@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/big"
 	"os"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/morpheum/chainlink-price-feed-golang/pricefeed"
 	"github.com/morpheum/chainlink-price-feed-golang/rpcscan"
+	"gopkg.in/yaml.v2"
 )
 
 func main() {
@@ -236,7 +238,7 @@ func chainlink_start() {
 							priceFloat := new(big.Float).SetInt(priceData.Answer)
 							divisor := new(big.Float).SetInt64(1e8) // 10^8
 							priceFloat.Quo(priceFloat, divisor)
-							
+
 							// Convert to float64 for display
 							priceValue, _ := priceFloat.Float64()
 
@@ -304,6 +306,45 @@ func getAssetName(priceId string, priceIdToAsset map[string]string) string {
 	return "Unknown"
 }
 
+// PythTicker represents a single Pyth price feed configuration
+type PythTicker struct {
+	Symbol      string `yaml:"symbol"`
+	PriceID     string `yaml:"price_id"`
+	Decimals    int    `yaml:"decimals"`
+	Description string `yaml:"description"`
+	Category    string `yaml:"category"`
+}
+
+// PythTickersConfig represents the entire Pyth tickers configuration
+type PythTickersConfig map[string]PythTicker
+
+// loadPythTickers loads Pyth tickers from the YAML configuration file
+func loadPythTickers(configPath string) (map[string]string, error) {
+	// Read the YAML file
+	data, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read Pyth tickers config file: %v", err)
+	}
+
+	// Parse the YAML
+	var config PythTickersConfig
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("failed to parse Pyth tickers YAML: %v", err)
+	}
+
+	// Convert to priceID -> symbol mapping
+	priceFeeds := make(map[string]string)
+	for _, ticker := range config {
+		if ticker.PriceID != "" && ticker.Symbol != "" {
+			priceFeeds[ticker.PriceID] = ticker.Symbol
+			log.Printf("Loaded Pyth ticker: %s (%s)", ticker.Symbol, ticker.PriceID)
+		}
+	}
+
+	log.Printf("Successfully loaded %d Pyth tickers from %s", len(priceFeeds), configPath)
+	return priceFeeds, nil
+}
+
 func pyth_start() {
 	log.Println("Starting Pyth Price Feed Monitor...")
 
@@ -312,13 +353,26 @@ func pyth_start() {
 	interval := 10 * time.Second // Poll every 10 seconds
 	immediateMode := true        // Print prices immediately when received
 
-	// Define price feed IDs and their symbols
-	priceFeeds := map[string]string{
-		"e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43": "BTC/USD",
-		"ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace": "ETH/USD",
-		// Add more price feeds here as needed:
-		// "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d": "SOL/USD",
-		// "93da3352f9f1d105fdf1104972eccd99cebaecc431460e19d20f67a0f6b59200": "AVAX/USD",
+	// Try to load Pyth tickers from YAML configuration file
+	configPath := "conf/pyth_tickers.yaml"
+	priceFeeds, err := loadPythTickers(configPath)
+	if err != nil {
+		log.Printf("Failed to load Pyth tickers from %s: %v", configPath, err)
+		log.Println("Falling back to default price feeds...")
+
+		// Fallback to default price feeds
+		priceFeeds = map[string]string{
+			"e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43": "BTC/USD",
+			"ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace": "ETH/USD",
+			"47a156470288850a440df3a6ce85a55917b813a19bb5b31128a33a986566a362": "TSLAX/USD",
+			"4244d07890e4610f46bbde67de8f43a4bf8b569eebe904f136b469f148503b7f": "NVDAX/USD",
+			"8132e3eb1dac3e56939a16ff83848d194345f6688bff97eb1c8bd462d558802b": "VIRTUAL/USD",
+			"58cd29ef0e714c5affc44f269b2c1899a52da4169d7acc147b9da692e6953608": "FARTCOIN/USD",
+			"4279e31cc369bbcc2faf022b382b080e32a8e689ff20fbc530d2a603eb6cd98b": "HYPE/USD",
+			"752f22bbcdd24a1c5e0b0149e0196c076b8e1f088cdb60b6d7d7cd41787e7631": "HYPER/USD",
+			"ec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8": "XRP/USD",
+			"78d185a741d07edb3412b09008b7c5cfb9bbbd7d568bf00ba737b456ba171501": "UNI/USD",
+		}
 	}
 
 	// Create Pyth price monitor
@@ -354,7 +408,7 @@ func pyth_start() {
 				if len(allPrices) > 0 {
 					log.Printf("📊 CURRENT PRICES:")
 					for _, priceData := range allPrices {
-						log.Printf("  %s: $%s (Updated: %s)",
+						log.Printf("  %s: %s (Updated: %s)",
 							priceData.Symbol,
 							priceData.Price.String(),
 							priceData.Timestamp.Format("15:04:05"))
