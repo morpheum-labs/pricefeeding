@@ -247,3 +247,16 @@ Dockerfile
 zig-out
 zig-cache
 zig-out
+/build
+/build-cgo
+/target
+/target-cgo
+/target-cgo-build
+/target-cgo-build-dev
+/target-cgo-build-prod
+/target-cgo-build-staging
+/target-cgo-build-production
+/target-cgo-build-development
+/target-cgo-build-testing
+/target-cgo-build-staging
+/target-cgo-build-production
