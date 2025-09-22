@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	aggregatorv3 "github.com/morpheum/chainlink-price-feed-golang/aggregatorv3"
+	aggregatorv3 "github.com/morpheum-labs/pricefeeding/aggregatorv3"
 )
 
 // PriceData represents price information from Chainlink

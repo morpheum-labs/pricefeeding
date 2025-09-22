@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/morpheum/chainlink-price-feed-golang/pyth"
+	"github.com/morpheum-labs/pricefeeding/pyth"
 )
 
 // PythPriceData represents price information from Pyth

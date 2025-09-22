@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/morpheum/chainlink-price-feed-golang/shared"
+	"github.com/morpheum-labs/pricefeeding/shared"
 	"gopkg.in/yaml.v3"
 )
 

@@ -12,8 +12,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/morpheum/chainlink-price-feed-golang/pricefeed"
-	"github.com/morpheum/chainlink-price-feed-golang/rpcscan"
+	"github.com/morpheum-labs/pricefeeding/pricefeed"
+	"github.com/morpheum-labs/pricefeeding/rpcscan"
 	"gopkg.in/yaml.v2"
 )
 

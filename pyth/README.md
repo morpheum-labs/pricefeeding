@@ -16,7 +16,7 @@ A Go client library for interacting with the Pyth Network Hermes service, provid
 ## Installation
 
 ```bash
-go get github.com/morpheum/chainlink-price-feed-golang/pyth
+go get github.com/morpheum-labs/pricefeeding/pyth
 ```
 
 ## Quick Start
@@ -29,7 +29,7 @@ import (
     "fmt"
     "log"
     
-    "github.com/morpheum/chainlink-price-feed-golang/pyth"
+    "github.com/morpheum-labs/pricefeeding/pyth"
 )
 
 func main() {

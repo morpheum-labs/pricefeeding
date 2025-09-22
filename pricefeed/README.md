@@ -20,7 +20,7 @@ package main
 
 import (
     "time"
-    "github.com/morpheum/chainlink-price-feed-golang/pricefeed"
+    "github.com/morpheum-labs/pricefeeding/pricefeed"
 )
 
 func main() {
@@ -153,7 +153,7 @@ go test ./pricefeed -v
 
 ## Dependencies
 
-- `github.com/morpheum/chainlink-price-feed-golang/pyth` - Pyth client library
+- `github.com/morpheum-labs/pricefeeding/pyth` - Pyth client library
 - Standard Go libraries for HTTP, JSON, and concurrency
 
 ## Notes
