@@ -221,12 +221,12 @@ export const extraRpcs = {
     rpcs: [
       // Quicknode -> tracks IP
       {
-        url: "https://go.getblock.io/aefd01aa907c4805ba3c00a9e5b48c6b",
+        url: "https://go.getblock.io/YOUR_GETBLOCK_API_KEY",
         tracking: "none",
         trackingDetails: privacyStatement.getblock,
       },
       {
-        url: "https://eth-mainnet.nodereal.io/v1/1659dfb40aa24bbb8153a677b98064d7",
+        url: "https://eth-mainnet.nodereal.io/v1/YOUR_NODEREAL_API_KEY",
         tracking: "yes",
         trackingDetails: privacyStatement.nodereal,
       },
@@ -459,7 +459,7 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.radiumblock,
       },
       {
-        url: "https://eth-mainnet.4everland.org/v1/37fa9972c1b1cd5fab542c7bdd4cde2f",
+        url: "https://eth-mainnet.4everland.org/v1/YOUR_4EVERLAND_API_KEY",
         tracking: "limited",
         trackingDetails: privacyStatement["4everland"],
       },
@@ -599,7 +599,7 @@ export const extraRpcs = {
   },
   //Rinkeby testnet deprecated
   4: {
-    rpcs: ["https://rinkeby.infura.io/3/9aa3d95b3bc440fa88ea12eaa4456161"],
+    rpcs: ["https://rinkeby.infura.io/3/YOUR_INFURA_PROJECT_ID"],
   },
   5: {
     rpcs: [
@@ -609,7 +609,7 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.omnia,
       },
       {
-        url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        url: "https://goerli.infura.io/v3/YOUR_INFURA_PROJECT_ID",
         tracking: "limited",
         trackingDetails: privacyStatement.infura,
       },
@@ -667,7 +667,7 @@ export const extraRpcs = {
   },
   //Ropsten testnet deprecated
   3: {
-    rpcs: ["https://ropsten.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"],
+    rpcs: ["https://ropsten.infura.io/v3/YOUR_INFURA_PROJECT_ID"],
   },
   195: {
     rpcs: ["https://xlayertestrpc.okx.com", "https://testrpc.xlayer.tech"],
@@ -878,12 +878,12 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.nodies,
       },
       {
-        url: "https://bsc-mainnet.nodereal.io/v1/64a9df0874fb4a93b9d0a3849de012d3",
+        url: "https://bsc-mainnet.nodereal.io/v1/YOUR_NODEREAL_API_KEY",
         tracking: "yes",
         trackingDetails: privacyStatement.nodereal,
       },
       {
-        url: "https://go.getblock.io/cc778cdbdf5c4b028ec9456e0e6c0cf3",
+        url: "https://go.getblock.io/YOUR_GETBLOCK_API_KEY",
         tracking: "limited",
         trackingDetails: privacyStatement.getblock,
       },
@@ -972,7 +972,7 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.nownodes,
       },
       {
-        url: "https://bsc-mainnet.4everland.org/v1/37fa9972c1b1cd5fab542c7bdd4cde2f",
+        url: "https://bsc-mainnet.4everland.org/v1/YOUR_4EVERLAND_API_KEY",
         tracking: "limited",
         trackingDetails: privacyStatement["4everland"],
       },
@@ -1048,7 +1048,7 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.stackup,
       },
       {
-        url: "https://bsc-testnet.4everland.org/v1/37fa9972c1b1cd5fab542c7bdd4cde2f",
+        url: "https://bsc-testnet.4everland.org/v1/YOUR_4EVERLAND_API_KEY",
         tracking: "limited",
         trackingDetails: privacyStatement["4everland"],
       },
@@ -1329,7 +1329,7 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.alchemy,
       },
       {
-        url: "https://go.getblock.io/02667b699f05444ab2c64f9bff28f027",
+        url: "https://go.getblock.io/YOUR_GETBLOCK_API_KEY",
         tracking: "yes",
         trackingDetails: privacyStatement.getblock,
       },
@@ -1380,7 +1380,7 @@ export const extraRpcs = {
       },
       "https://polygon.rpc.subquery.network/public",
       {
-        url: "https://polygon-mainnet.4everland.org/v1/37fa9972c1b1cd5fab542c7bdd4cde2f",
+        url: "https://polygon-mainnet.4everland.org/v1/YOUR_4EVERLAND_API_KEY",
         tracking: "limited",
         trackingDetails: privacyStatement["4everland"],
       },
@@ -1878,7 +1878,7 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.nodies,
       },
       {
-        url: "https://go.getblock.io/d7094dbd80ab474ba7042603fe912332",
+        url: "https://go.getblock.io/YOUR_GETBLOCK_API_KEY",
         tracking: "none",
         trackingDetails: privacyStatement.getblock,
       },
@@ -2087,7 +2087,7 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.onerpc,
       },
       {
-        url: "https://opbnb-mainnet.4everland.org/v1/37fa9972c1b1cd5fab542c7bdd4cde2f",
+        url: "https://opbnb-mainnet.4everland.org/v1/YOUR_4EVERLAND_API_KEY",
         tracking: "limited",
         trackingDetails: privacyStatement["4everland"],
       },
@@ -2422,12 +2422,12 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.tatum,
       },
       {
-        url: "https://go.getblock.io/e8a75f8dcf614861becfbcb185be6eb4",
+        url: "https://go.getblock.io/YOUR_GETBLOCK_API_KEY",
         tracking: "yes",
         trackingDetails: privacyStatement.getblock,
       },
       {
-        url: "https://opt-mainnet.4everland.org/v1/37fa9972c1b1cd5fab542c7bdd4cde2f",
+        url: "https://opt-mainnet.4everland.org/v1/YOUR_4EVERLAND_API_KEY",
         tracking: "limited",
         trackingDetails: privacyStatement["4everland"],
       },
@@ -3467,7 +3467,7 @@ export const extraRpcs = {
   11297108109: {
     rpcs: [
       {
-        url: "https://palm-mainnet.infura.io/v3/3a961d6501e54add9a41aa53f15de99b",
+        url: "https://palm-mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID",
         tracking: "limited",
         trackingDetails: privacyStatement.infura,
       },
@@ -4136,7 +4136,7 @@ export const extraRpcs = {
     rpcs: [
       "https://mainnet.era.zksync.io",
       {
-        url: "https://go.getblock.io/f76c09905def4618a34946bf71851542",
+        url: "https://go.getblock.io/YOUR_GETBLOCK_API_KEY",
         tracking: "limited",
         trackingDetails: privacyStatement.getblock,
       },
@@ -5480,7 +5480,7 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.nodies,
       },
       {
-        url: "https://eth-testnet.4everland.org/v1/37fa9972c1b1cd5fab542c7bdd4cde2f",
+        url: "https://eth-testnet.4everland.org/v1/YOUR_4EVERLAND_API_KEY",
         tracking: "limited",
         trackingDetails: privacyStatement["4everland"],
       },
@@ -5978,7 +5978,7 @@ export const extraRpcs = {
     rpcs: [
       "https://rpc.sepolia.linea.build",
       {
-        url: "https://linea-sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        url: "https://linea-sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID",
         tracking: "limited",
         trackingDetails: privacyStatement.infura,
       },
@@ -6134,7 +6134,7 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.taikotools,
       },
       {
-        url: "https://taiko-mainnet.4everland.org/v1/37fa9972c1b1cd5fab542c7bdd4cde2f",
+        url: "https://taiko-mainnet.4everland.org/v1/YOUR_4EVERLAND_API_KEY",
         tracking: "limited",
         trackingDetails: privacyStatement["4everland"],
       },
@@ -6194,7 +6194,7 @@ export const extraRpcs = {
         trackingDetails: privacyStatement.taikotools,
       },
       {
-        url: "https://taiko-hekla.4everland.org/v1/37fa9972c1b1cd5fab542c7bdd4cde2f",
+        url: "https://taiko-hekla.4everland.org/v1/YOUR_4EVERLAND_API_KEY",
         tracking: "limited",
         trackingDetails: privacyStatement["4everland"],
       },

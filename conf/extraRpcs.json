@@ -2,7 +2,7 @@
   "1": {
     "rpcs": [
       {
-        "url": "https://eth-mainnet.nodereal.io/v1/1659dfb40aa24bbb8153a677b98064d7",
+        "url": "https://eth-mainnet.nodereal.io/v1/YOUR_NODEREAL_API_KEY",
         "tracking": "yes",
         "trackingDetails": "privacyStatement.nodereal"
       },
@@ -231,12 +231,12 @@
   },
   "3": {
     "rpcs": [
-      "https://ropsten.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
+      "https://ropsten.infura.io/v3/YOUR_INFURA_PROJECT_ID"
     ]
   },
   "4": {
     "rpcs": [
-      "https://rinkeby.infura.io/3/9aa3d95b3bc440fa88ea12eaa4456161"
+      "https://rinkeby.infura.io/3/YOUR_INFURA_PROJECT_ID"
     ]
   },
   "5": {
@@ -247,7 +247,7 @@
         "trackingDetails": "privacyStatement.omnia"
       },
       {
-        "url": "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        "url": "https://goerli.infura.io/v3/YOUR_INFURA_PROJECT_ID",
         "tracking": "limited",
         "trackingDetails": "privacyStatement.infura"
       },
@@ -407,7 +407,7 @@
         "trackingDetails": "privacyStatement.tatum"
       },
       {
-        "url": "https://go.getblock.io/e8a75f8dcf614861becfbcb185be6eb4",
+        "url": "https://go.getblock.io/YOUR_GETBLOCK_API_KEY",
         "tracking": "yes",
         "trackingDetails": "privacyStatement.getblock"
       }
@@ -1249,7 +1249,7 @@
         "trackingDetails": "privacyStatement.alchemy"
       },
       {
-        "url": "https://go.getblock.io/02667b699f05444ab2c64f9bff28f027",
+        "url": "https://go.getblock.io/YOUR_GETBLOCK_API_KEY",
         "tracking": "yes",
         "trackingDetails": "privacyStatement.getblock"
       },
@@ -1900,7 +1900,7 @@
     "rpcs": [
       "https://mainnet.era.zksync.io",
       {
-        "url": "https://go.getblock.io/f76c09905def4618a34946bf71851542",
+        "url": "https://go.getblock.io/YOUR_GETBLOCK_API_KEY",
         "tracking": "limited",
         "trackingDetails": "privacyStatement.getblock"
       },
@@ -4464,7 +4464,7 @@
         "trackingDetails": "privacyStatement.nodies"
       },
       {
-        "url": "https://go.getblock.io/d7094dbd80ab474ba7042603fe912332",
+        "url": "https://go.getblock.io/YOUR_GETBLOCK_API_KEY",
         "tracking": "none",
         "trackingDetails": "privacyStatement.getblock"
       },
@@ -6045,7 +6045,7 @@
     "rpcs": [
       "https://rpc.sepolia.linea.build",
       {
-        "url": "https://linea-sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        "url": "https://linea-sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID",
         "tracking": "limited",
         "trackingDetails": "privacyStatement.infura"
       },
@@ -7820,7 +7820,7 @@
   "11297108109": {
     "rpcs": [
       {
-        "url": "https://palm-mainnet.infura.io/v3/3a961d6501e54add9a41aa53f15de99b",
+        "url": "https://palm-mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID",
         "tracking": "limited",
         "trackingDetails": "privacyStatement.infura"
       },

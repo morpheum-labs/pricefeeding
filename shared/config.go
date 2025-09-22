@@ -12,8 +12,6 @@ import (
 
 func LoadYamlConf(file_path string) *Configuration {
 	var config *Configuration
-
-	// configPath := "/Users/hesdx/Documents/b95/swapbiz/onchainvault/docs/vault_config.yaml"
 	ctx := context.Background()
 	for {
 		config, err := readConfig(file_path)

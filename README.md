@@ -58,7 +58,7 @@ The application now uses **YAML configuration** instead of TOML for better reada
 ```yaml
 # Server configuration
 port: 8080
-secret_hash: "your-secret-hash-here"
+secret_hash: "YOUR_SECRET_HASH_HERE"
 
 # Database configuration
 database:
@@ -70,12 +70,12 @@ database:
 arbitrum_rpcs:
   urls:
     - "https://arb1.arbitrum.io/rpc"
-    - "https://arbitrum-mainnet.infura.io/v3/YOUR_INFURA_KEY"
+    - "https://arbitrum-mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID"
 
 ethereum_rpcs:
   urls:
-    - "https://mainnet.infura.io/v3/YOUR_INFURA_KEY"
-    - "https://eth-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_KEY"
+    - "https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID"
+    - "https://eth-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY"
     - "https://rpc.ankr.com/eth"
 
 # Price feed monitoring configuration
