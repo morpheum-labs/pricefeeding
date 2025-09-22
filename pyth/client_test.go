@@ -133,16 +133,14 @@ func TestGetLatestPriceUpdates(t *testing.T) {
 			Type:     "price_update",
 			Encoding: "hex",
 			Data:     "mock-data",
-			Parsed: &ParsedPriceUpdate{
-				PriceFeeds: []PriceFeed{
-					{
-						ID: "test-id",
-						Price: Price{
-							Price:       "50000",
-							Conf:        "100",
-							Expo:        -8,
-							PublishTime: time.Now().Unix(),
-						},
+			Parsed: []PriceFeed{
+				{
+					ID: "test-id",
+					Price: Price{
+						Price:       "50000",
+						Conf:        "100",
+						Expo:        -8,
+						PublishTime: time.Now().Unix(),
 					},
 				},
 			},
@@ -179,8 +177,8 @@ func TestGetLatestPriceUpdates(t *testing.T) {
 		t.Error("Expected parsed data to be present")
 	}
 
-	if len(updates.Parsed.PriceFeeds) != 1 {
-		t.Errorf("Expected 1 price feed, got %d", len(updates.Parsed.PriceFeeds))
+	if len(updates.Parsed) != 1 {
+		t.Errorf("Expected 1 price feed, got %d", len(updates.Parsed))
 	}
 }
 
@@ -196,16 +194,14 @@ func TestGetLatestTwaps(t *testing.T) {
 			Type:     "twaps_response",
 			Encoding: "hex",
 			Data:     "mock-data",
-			Parsed: &ParsedTwapsUpdate{
-				Twaps: []Twap{
-					{
-						ID: "test-id",
-						Price: Price{
-							Price:       "50000",
-							Conf:        "100",
-							Expo:        -8,
-							PublishTime: time.Now().Unix(),
-						},
+			Parsed: []Twap{
+				{
+					ID: "test-id",
+					Price: Price{
+						Price:       "50000",
+						Conf:        "100",
+						Expo:        -8,
+						PublishTime: time.Now().Unix(),
 					},
 				},
 			},
@@ -242,8 +238,8 @@ func TestGetLatestTwaps(t *testing.T) {
 		t.Error("Expected parsed data to be present")
 	}
 
-	if len(twaps.Parsed.Twaps) != 1 {
-		t.Errorf("Expected 1 TWAP, got %d", len(twaps.Parsed.Twaps))
+	if len(twaps.Parsed) != 1 {
+		t.Errorf("Expected 1 TWAP, got %d", len(twaps.Parsed))
 	}
 }
 

@@ -116,16 +116,32 @@ type PriceMonitor struct {
 	mu            sync.RWMutex
 	stopChan      chan struct{}
 	interval      time.Duration
-	networkConfig interface{} // Will hold reference to NetworkConfiguration for RPC switching
+	networkConfig interface{}                  // Will hold reference to NetworkConfiguration for RPC switching
+	feedSymbols   map[uint64]map[string]string // networkID -> feedAddress -> symbol mapping
+	immediateMode bool                         // If true, prints prices immediately when received
 }
 
 // NewPriceMonitor creates a new price monitor
 func NewPriceMonitor(interval time.Duration) *PriceMonitor {
 	return &PriceMonitor{
-		cache:    NewPriceCache(),
-		clients:  make(map[uint64]*ethclient.Client),
-		stopChan: make(chan struct{}),
-		interval: interval,
+		cache:         NewPriceCache(),
+		clients:       make(map[uint64]*ethclient.Client),
+		stopChan:      make(chan struct{}),
+		interval:      interval,
+		feedSymbols:   make(map[uint64]map[string]string),
+		immediateMode: false, // Default to false, can be enabled later
+	}
+}
+
+// NewPriceMonitorWithImmediateMode creates a new price monitor with immediate mode setting
+func NewPriceMonitorWithImmediateMode(interval time.Duration, immediateMode bool) *PriceMonitor {
+	return &PriceMonitor{
+		cache:         NewPriceCache(),
+		clients:       make(map[uint64]*ethclient.Client),
+		stopChan:      make(chan struct{}),
+		interval:      interval,
+		feedSymbols:   make(map[uint64]map[string]string),
+		immediateMode: immediateMode,
 	}
 }
 
@@ -148,6 +164,20 @@ func (pm *PriceMonitor) UpdateClient(networkID uint64, client *ethclient.Client)
 // AddPriceFeed adds a price feed to monitor
 func (pm *PriceMonitor) AddPriceFeed(networkID uint64, feedAddress string) {
 	pm.cache.AddFeed(networkID, feedAddress)
+}
+
+// AddPriceFeedWithSymbol adds a price feed to monitor with a symbol for better display
+func (pm *PriceMonitor) AddPriceFeedWithSymbol(networkID uint64, feedAddress string, symbol string) {
+	pm.cache.AddFeed(networkID, feedAddress)
+
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	if pm.feedSymbols[networkID] == nil {
+		pm.feedSymbols[networkID] = make(map[string]string)
+	}
+	pm.feedSymbols[networkID][feedAddress] = symbol
+	log.Printf("Added Chainlink price feed: %s (%s) for network %d", symbol, feedAddress, networkID)
 }
 
 // GetPrice retrieves the latest price for a specific feed
@@ -256,7 +286,13 @@ func (pm *PriceMonitor) updateAllPrices() {
 				}
 
 				pm.cache.UpdatePrice(netID, feedAddr, priceData)
-				log.Printf("Updated price for feed %s on network %d: %s", feedAddr, netID, priceData.Answer.String())
+
+				// Print immediately if in immediate mode
+				if pm.immediateMode {
+					pm.printPriceUpdate(netID, feedAddr, priceData)
+				} else {
+					log.Printf("Updated price for feed %s on network %d: %s", feedAddr, netID, priceData.Answer.String())
+				}
 			}(networkID, feedAddress)
 		}
 	}
@@ -264,9 +300,40 @@ func (pm *PriceMonitor) updateAllPrices() {
 	wg.Wait()
 }
 
+// printPriceUpdate prints price update information in a formatted way
+func (pm *PriceMonitor) printPriceUpdate(networkID uint64, feedAddress string, priceData *PriceData) {
+	// Get symbol if available
+	pm.mu.RLock()
+	symbol := "Unknown"
+	if networkSymbols, exists := pm.feedSymbols[networkID]; exists {
+		if feedSymbol, exists := networkSymbols[feedAddress]; exists {
+			symbol = feedSymbol
+		}
+	}
+	pm.mu.RUnlock()
+
+	// Convert price to human readable format (assuming 8 decimals)
+	// Convert to float with proper precision
+	priceFloat := new(big.Float).SetInt(priceData.Answer)
+	divisor := new(big.Float).SetInt64(1e8) // 10^8
+	priceFloat.Quo(priceFloat, divisor)
+
+	fmt.Printf("🔄 CHAINLINK PRICE UPDATE [%s]\n", time.Now().Format("15:04:05"))
+	fmt.Printf("   Symbol: %s\n", symbol)
+	fmt.Printf("   Network ID: %d\n", networkID)
+	fmt.Printf("   Feed Address: %s\n", feedAddress)
+	fmt.Printf("   Price: $%s\n", priceFloat.Text('f', 8))
+	fmt.Printf("   Round ID: %s\n", priceData.RoundID.String())
+	fmt.Printf("   Started At: %s\n", time.Unix(priceData.StartedAt.Int64(), 0).Format("15:04:05"))
+	fmt.Printf("   Updated At: %s\n", time.Unix(priceData.UpdatedAt.Int64(), 0).Format("15:04:05"))
+	fmt.Printf("   Answered In Round: %s\n", priceData.AnsweredInRound.String())
+	fmt.Printf("   Timestamp: %s\n", priceData.Timestamp.Format("15:04:05"))
+	fmt.Println("   " + strings.Repeat("-", 50))
+}
+
 // Start begins monitoring price feeds
 func (pm *PriceMonitor) Start() {
-	log.Printf("Starting price monitor with %v interval", pm.interval)
+	log.Printf("Starting Chainlink price monitor with %v interval (immediate mode: %v)", pm.interval, pm.immediateMode)
 
 	ticker := time.NewTicker(pm.interval)
 	defer ticker.Stop()
@@ -277,7 +344,7 @@ func (pm *PriceMonitor) Start() {
 	for {
 		select {
 		case <-pm.stopChan:
-			log.Println("Stopping price monitor")
+			log.Println("Stopping Chainlink price monitor")
 			return
 		case <-ticker.C:
 			pm.updateAllPrices()
@@ -300,6 +367,67 @@ func (pm *PriceMonitor) SetNetworkConfig(networkConfig interface{}) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 	pm.networkConfig = networkConfig
+}
+
+// SetImmediateMode sets whether to print prices immediately
+func (pm *PriceMonitor) SetImmediateMode(immediate bool) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	pm.immediateMode = immediate
+	log.Printf("Chainlink price monitor immediate mode set to: %v", immediate)
+}
+
+// PrintStatus prints the current cache status and monitored feeds
+func (pm *PriceMonitor) PrintStatus() {
+	pm.mu.RLock()
+	clientCount := len(pm.clients)
+	feedCount := 0
+	for _, feeds := range pm.cache.feeds {
+		feedCount += len(feeds)
+	}
+	pm.mu.RUnlock()
+
+	fmt.Printf("📊 CHAINLINK CACHE STATUS\n")
+	fmt.Printf("   Active Networks: %d\n", clientCount)
+	fmt.Printf("   Monitored Feeds: %d\n", feedCount)
+	fmt.Printf("   Immediate Mode: %v\n", pm.immediateMode)
+	fmt.Printf("   Update Interval: %v\n", pm.interval)
+
+	// Show feeds by network
+	for networkID, feeds := range pm.cache.feeds {
+		if len(feeds) > 0 {
+			fmt.Printf("   Network %d: %d feeds\n", networkID, len(feeds))
+			pm.mu.RLock()
+			if networkSymbols, exists := pm.feedSymbols[networkID]; exists {
+				for _, feedAddress := range feeds {
+					if symbol, exists := networkSymbols[feedAddress]; exists {
+						fmt.Printf("     - %s (%s)\n", symbol, feedAddress)
+					} else {
+						fmt.Printf("     - Unknown (%s)\n", feedAddress)
+					}
+				}
+			} else {
+				for _, feedAddress := range feeds {
+					fmt.Printf("     - Unknown (%s)\n", feedAddress)
+				}
+			}
+			pm.mu.RUnlock()
+		}
+	}
+	fmt.Println("   " + strings.Repeat("-", 50))
+}
+
+// GetFeedSymbol returns the symbol for a feed address on a specific network
+func (pm *PriceMonitor) GetFeedSymbol(networkID uint64, feedAddress string) string {
+	pm.mu.RLock()
+	defer pm.mu.RUnlock()
+
+	if networkSymbols, exists := pm.feedSymbols[networkID]; exists {
+		if symbol, exists := networkSymbols[feedAddress]; exists {
+			return symbol
+		}
+	}
+	return "Unknown"
 }
 
 // isErrorCode32097 checks if the error contains the specific error code -32097

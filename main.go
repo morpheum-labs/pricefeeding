@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log"
+	"math/big"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -13,42 +15,51 @@ import (
 	"github.com/morpheum/chainlink-price-feed-golang/rpcscan"
 )
 
-// PriceCacheManager manages the local price cache with persistence
-type PriceCacheManager struct {
-	cache     *pricefeed.PriceCache
-	mu        sync.RWMutex
-	lastSaved time.Time
-}
+func main() {
+	// Parse command line arguments
+	var (
+		chainlink = flag.Bool("chainlink", false, "Start Chainlink price feed monitor")
+		pyth      = flag.Bool("pyth", false, "Start Pyth price feed client")
+	)
+	flag.Parse()
 
-// NewPriceCacheManager creates a new price cache manager
-func NewPriceCacheManager() *PriceCacheManager {
-	return &PriceCacheManager{
-		cache:     pricefeed.NewPriceCache(),
-		lastSaved: time.Now(),
+	// Check if any mode is specified
+	if !*chainlink && !*pyth {
+		fmt.Println("Usage:")
+		fmt.Println("  --chainlink    Start Chainlink price feed monitor")
+		fmt.Println("  --pyth         Start Pyth price feed client")
+		fmt.Println("")
+		fmt.Println("Example:")
+		fmt.Println("  go run . --chainlink")
+		fmt.Println("  go run . --pyth")
+		os.Exit(1)
+	}
+
+	// Check if both modes are specified
+	if *chainlink && *pyth {
+		log.Fatal("Cannot start both Chainlink and Pyth clients simultaneously. Please choose one.")
+	}
+
+	// Start the appropriate service
+	if *chainlink {
+		log.Println("Starting Chainlink price feed monitor...")
+		chainlink_start()
+	} else if *pyth {
+		log.Println("Starting Pyth price feed client...")
+		pyth_start()
 	}
 }
 
-// UpdatePrice updates a price in the cache
-func (pcm *PriceCacheManager) UpdatePrice(networkID uint64, feedAddress string, priceData *pricefeed.PriceData) {
-	pcm.cache.UpdatePrice(networkID, feedAddress, priceData)
+// Helper functions for pointer creation
+func stringPtr(s string) *string {
+	return &s
 }
 
-// GetPrice retrieves a price from the cache
-func (pcm *PriceCacheManager) GetPrice(networkID uint64, feedAddress string) (*pricefeed.PriceData, error) {
-	return pcm.cache.GetPrice(networkID, feedAddress)
+func boolPtr(b bool) *bool {
+	return &b
 }
 
-// GetAllPrices retrieves all prices for a network
-func (pcm *PriceCacheManager) GetAllPrices(networkID uint64) map[string]*pricefeed.PriceData {
-	return pcm.cache.GetAllPrices(networkID)
-}
-
-// AddFeed adds a price feed to monitor
-func (pcm *PriceCacheManager) AddFeed(networkID uint64, feedAddress string) {
-	pcm.cache.AddFeed(networkID, feedAddress)
-}
-
-func main() {
+func chainlink_start() {
 	log.Println("Starting Chainlink Price Feed Monitor with Switchable RPC Clients...")
 
 	// Create price feed manager for Arbitrum network (Chain ID: 42161)
@@ -70,7 +81,7 @@ func main() {
 	networkConfig := priceFeedManager.CreateNetworkConfig()
 
 	// Create price cache manager
-	priceCacheManager := NewPriceCacheManager()
+	priceCacheManager := pricefeed.NewPriceCacheManager()
 
 	// Start RPC monitoring with optimized intervals
 	stopChan := make(chan struct{})
@@ -101,8 +112,8 @@ func main() {
 		time.Sleep(2 * time.Second)
 	}
 
-	// Create price monitor with 30-second intervals as requested
-	priceMonitor := pricefeed.NewPriceMonitor(30 * time.Second)
+	// Create price monitor with 30-second intervals and immediate mode enabled
+	priceMonitor := pricefeed.NewPriceMonitorWithImmediateMode(30*time.Second, true)
 
 	// Set network configuration for RPC switching
 	priceMonitor.SetNetworkConfig(networkConfig)
@@ -118,7 +129,8 @@ func main() {
 		log.Printf("Found %d feeds for network %d", len(feeds), networkID)
 		for _, feed := range feeds {
 			if feed.Address != "" && feed.Address != "0x" {
-				priceMonitor.AddPriceFeed(networkID, feed.Address)
+				// Use the enhanced method with symbol
+				priceMonitor.AddPriceFeedWithSymbol(networkID, feed.Address, feed.Symbol)
 				priceCacheManager.AddFeed(networkID, feed.Address)
 				log.Printf("Added price feed %s (%s) for network %d - %s", feed.Name, feed.Address, networkID, feed.Symbol)
 			} else {
@@ -180,7 +192,7 @@ func main() {
 		}
 	}()
 
-	// Start price display goroutine
+	// Start status monitoring goroutine
 	go func() {
 		ticker := time.NewTicker(60 * time.Second)
 		defer ticker.Stop()
@@ -190,12 +202,15 @@ func main() {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
+				// Print Chainlink monitor status
+				priceMonitor.PrintStatus()
+
 				// Display current prices for all networks
 				clients := networkConfig.GetAllClients()
 				for networkID := range clients {
 					prices := priceCacheManager.GetAllPrices(networkID)
 					if len(prices) > 0 {
-						log.Printf("=== Network %d (Chain ID: %d) Prices ===", networkID, networkID)
+						log.Printf("📊 CURRENT CHAINLINK PRICES - Network %d:", networkID)
 
 						// Get all feeds to match addresses with names
 						allFeeds := priceFeedManager.GetAllFeeds()
@@ -216,21 +231,20 @@ func main() {
 								symbol = "Unknown"
 							}
 
-							// Convert price to human readable format based on decimals
-							decimals := 8 // default
-							if exists {
-								decimals = feedInfo.Decimals
-							}
-							priceFloat := float64(priceData.Answer.Int64()) / float64(1e8)
-							if decimals != 8 {
-								priceFloat = float64(priceData.Answer.Int64()) / float64(1e8)
-							}
+							// Convert price to human readable format (assuming 8 decimals)
+							// Use big.Float for proper precision
+							priceFloat := new(big.Float).SetInt(priceData.Answer)
+							divisor := new(big.Float).SetInt64(1e8) // 10^8
+							priceFloat.Quo(priceFloat, divisor)
+							
+							// Convert to float64 for display
+							priceValue, _ := priceFloat.Float64()
 
-							log.Printf("Feed %s (%s): $%.2f (Updated: %s, Round: %s)",
+							log.Printf("  %s (%s): $%.2f (Updated: %s, Round: %s)",
 								feedName,
 								symbol,
-								priceFloat,
-								priceData.Timestamp.Format(time.RFC3339),
+								priceValue,
+								priceData.Timestamp.Format("15:04:05"),
 								priceData.RoundID.String())
 						}
 					}
@@ -262,9 +276,11 @@ func main() {
 	log.Println("Chainlink Price Feed Monitor started successfully!")
 	log.Println("Features:")
 	log.Println("- Switchable RPC clients for consistent connections")
-	log.Println("- 30-second price polling intervals")
-	log.Println("- Local price cache storage")
+	log.Println("- 30-second price polling intervals with immediate mode")
+	log.Println("- Local price cache storage with persistence tracking")
 	log.Println("- Optimized computation with concurrent request limiting")
+	log.Println("- Enhanced price display with symbol mapping")
+	log.Println("- Real-time status monitoring and cache tracking")
 	log.Println("- Graceful shutdown handling")
 	log.Println("Press Ctrl+C to stop.")
 
@@ -278,4 +294,92 @@ func main() {
 	// Wait a moment for goroutines to finish
 	time.Sleep(2 * time.Second)
 	log.Println("Shutdown complete")
+}
+
+// Helper function to get asset name from price ID
+func getAssetName(priceId string, priceIdToAsset map[string]string) string {
+	if assetName, exists := priceIdToAsset[priceId]; exists {
+		return assetName
+	}
+	return "Unknown"
+}
+
+func pyth_start() {
+	log.Println("Starting Pyth Price Feed Monitor...")
+
+	// Default configuration
+	endpoint := "https://hermes.pyth.network"
+	interval := 10 * time.Second // Poll every 10 seconds
+	immediateMode := true        // Print prices immediately when received
+
+	// Define price feed IDs and their symbols
+	priceFeeds := map[string]string{
+		"e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43": "BTC/USD",
+		"ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace": "ETH/USD",
+		// Add more price feeds here as needed:
+		// "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d": "SOL/USD",
+		// "93da3352f9f1d105fdf1104972eccd99cebaecc431460e19d20f67a0f6b59200": "AVAX/USD",
+	}
+
+	// Create Pyth price monitor
+	monitor := pricefeed.NewPythPriceMonitor(endpoint, interval, immediateMode)
+
+	// Add price feeds to monitor
+	for priceID, symbol := range priceFeeds {
+		monitor.AddPriceFeed(priceID, symbol)
+	}
+
+	// Set up signal handling for graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Start the monitor in a goroutine
+	go monitor.Start()
+
+	// Start a status display goroutine
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-sigChan:
+				return
+			case <-ticker.C:
+				// Print cache status every 30 seconds
+				monitor.PrintLastSavedStatus()
+
+				// Also print all current prices
+				allPrices := monitor.GetAllPrices()
+				if len(allPrices) > 0 {
+					log.Printf("📊 CURRENT PRICES:")
+					for _, priceData := range allPrices {
+						log.Printf("  %s: $%s (Updated: %s)",
+							priceData.Symbol,
+							priceData.Price.String(),
+							priceData.Timestamp.Format("15:04:05"))
+					}
+				}
+			}
+		}
+	}()
+
+	log.Printf("Pyth Price Feed Monitor started successfully!")
+	log.Printf("Monitoring %d price feeds:", len(priceFeeds))
+	for priceID, symbol := range priceFeeds {
+		log.Printf("  - %s (%s)", symbol, priceID)
+	}
+	log.Println("Features:")
+	log.Printf("- Polling every %v", interval)
+	log.Println("- Immediate price printing when updates are received")
+	log.Println("- Local price cache with persistence tracking")
+	log.Println("- Thread-safe operations")
+	log.Println("- Graceful shutdown handling")
+	log.Println("Press Ctrl+C to stop.")
+
+	// Wait for shutdown signal
+	<-sigChan
+	log.Println("Received shutdown signal, stopping Pyth price monitor...")
+	monitor.Stop()
+	log.Println("Pyth price monitor stopped.")
 }

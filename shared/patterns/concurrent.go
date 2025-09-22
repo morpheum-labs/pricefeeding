@@ -1,4 +1,4 @@
-package comm
+package patterns
 
 import (
 	"encoding/json"

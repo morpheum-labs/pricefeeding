@@ -70,7 +70,7 @@ func main() {
 	}
 
 	if priceUpdates.Parsed != nil {
-		for _, feed := range priceUpdates.Parsed.PriceFeeds {
+		for _, feed := range priceUpdates.Parsed {
 			fmt.Printf("Price Feed ID: %s\n", feed.ID)
 			fmt.Printf("  Price: %s (expo: %d)\n", feed.Price.Price, feed.Price.Expo)
 			fmt.Printf("  Confidence: %s\n", feed.Price.Conf)
@@ -91,7 +91,7 @@ func main() {
 	}
 
 	if twapUpdates.Parsed != nil {
-		for _, twap := range twapUpdates.Parsed.Twaps {
+		for _, twap := range twapUpdates.Parsed {
 			fmt.Printf("TWAP ID: %s\n", twap.ID)
 			fmt.Printf("  Price: %s (expo: %d)\n", twap.Price.Price, twap.Price.Expo)
 			fmt.Printf("  Confidence: %s\n", twap.Price.Conf)
@@ -124,7 +124,7 @@ func main() {
 		}
 
 		if priceUpdate.Parsed != nil {
-			for _, feed := range priceUpdate.Parsed.PriceFeeds {
+			for _, feed := range priceUpdate.Parsed {
 				fmt.Printf("Streamed Price Feed ID: %s, Price: %s\n", feed.ID, feed.Price.Price)
 			}
 		}

@@ -56,12 +56,19 @@ type BinaryPriceUpdate struct {
 	Data     string `json:"data"`
 }
 
+// BinaryData represents binary data in the response
+type BinaryData struct {
+	Encoding string   `json:"encoding"`
+	Data     []string `json:"data"`
+}
+
 // PriceUpdate represents a price update response
 type PriceUpdate struct {
-	Type     string             `json:"type"`
-	Encoding string             `json:"encoding"`
-	Data     string             `json:"data"`
-	Parsed   *ParsedPriceUpdate `json:"parsed,omitempty"`
+	Type     string      `json:"type"`
+	Encoding string      `json:"encoding"`
+	Data     string      `json:"data"`
+	Binary   *BinaryData `json:"binary,omitempty"`
+	Parsed   []PriceFeed `json:"parsed,omitempty"`
 }
 
 // ParsedPriceUpdate represents parsed price update data
@@ -71,16 +78,18 @@ type ParsedPriceUpdate struct {
 
 // PriceFeed represents a single price feed in a price update
 type PriceFeed struct {
-	ID          string `json:"id"`
-	Price       Price  `json:"price"`
-	Ema         Ema    `json:"ema"`
-	Conf        string `json:"conf"`
-	PublishSlot int64  `json:"publish_slot"`
-	PrevSlot    int64  `json:"prev_slot"`
-	PrevPrice   Price  `json:"prev_price"`
-	PrevConf    string `json:"prev_conf"`
-	PrevEma     Ema    `json:"prev_ema"`
-	PrevEmaConf string `json:"prev_ema_conf"`
+	ID          string   `json:"id"`
+	Price       Price    `json:"price"`
+	EmaPrice    Price    `json:"ema_price"`
+	Metadata    Metadata `json:"metadata"`
+	Ema         Ema      `json:"ema,omitempty"`
+	Conf        string   `json:"conf,omitempty"`
+	PublishSlot int64    `json:"publish_slot,omitempty"`
+	PrevSlot    int64    `json:"prev_slot,omitempty"`
+	PrevPrice   Price    `json:"prev_price,omitempty"`
+	PrevConf    string   `json:"prev_conf,omitempty"`
+	PrevEma     Ema      `json:"prev_ema,omitempty"`
+	PrevEmaConf string   `json:"prev_ema_conf,omitempty"`
 }
 
 // Price represents price information
@@ -99,12 +108,19 @@ type Ema struct {
 	PublishTime int64  `json:"publish_time"`
 }
 
+// Metadata represents metadata for a price feed
+type Metadata struct {
+	Slot               int64 `json:"slot"`
+	ProofAvailableTime int64 `json:"proof_available_time"`
+	PrevPublishTime    int64 `json:"prev_publish_time"`
+}
+
 // TwapsResponse represents TWAP (Time Weighted Average Price) response
 type TwapsResponse struct {
-	Type     string             `json:"type"`
-	Encoding string             `json:"encoding"`
-	Data     string             `json:"data"`
-	Parsed   *ParsedTwapsUpdate `json:"parsed,omitempty"`
+	Type     string `json:"type"`
+	Encoding string `json:"encoding"`
+	Data     string `json:"data"`
+	Parsed   []Twap `json:"parsed,omitempty"`
 }
 
 // ParsedTwapsUpdate represents parsed TWAP update data
