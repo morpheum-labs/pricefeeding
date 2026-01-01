@@ -4,6 +4,8 @@ import (
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/morpheum-labs/pricefeeding/types"
 )
 
 func TestPythPriceMonitorCreation(t *testing.T) {
@@ -54,11 +56,9 @@ func TestPythPriceMonitorAddFeed(t *testing.T) {
 	}
 }
 
-func TestPythPriceDataConversion(t *testing.T) {
-	monitor := NewPythPriceMonitor("https://hermes.pyth.network", 5*time.Second, true)
-
-	// Create a test PythPriceData
-	pythData := &PythPriceData{
+func TestPythPriceDataStructure(t *testing.T) {
+	// Create a test PythPrice
+	pythData := &types.PythPrice{
 		ID:          "test-id",
 		Symbol:      "BTC/USD",
 		Price:       big.NewInt(50000000000), // 50000 * 10^6
@@ -67,33 +67,24 @@ func TestPythPriceDataConversion(t *testing.T) {
 		PublishTime: 1640995200, // Unix timestamp
 		Slot:        12345,
 		Timestamp:   time.Now(),
-		NetworkID:   0,
+		NetworkID:   uint64(types.OracleNetworkIDPyth),
 	}
 
-	// Convert to Chainlink PriceData
-	chainlinkData := monitor.convertToChainlinkPriceData(pythData)
-
-	if chainlinkData == nil {
-		t.Fatal("Expected converted data to be non-nil")
+	// Test PriceInfo interface methods
+	if pythData.GetSource() != types.SourcePyth {
+		t.Errorf("Expected source %s, got %s", types.SourcePyth, pythData.GetSource())
 	}
 
-	if chainlinkData.Answer.Cmp(pythData.Price) != 0 {
-		t.Errorf("Expected price %s, got %s", pythData.Price.String(), chainlinkData.Answer.String())
+	if pythData.GetNetworkID() != uint64(types.OracleNetworkIDPyth) {
+		t.Errorf("Expected network ID %d, got %d", types.OracleNetworkIDPyth, pythData.GetNetworkID())
 	}
 
-	if chainlinkData.RoundID.Int64() != pythData.Slot {
-		t.Errorf("Expected round ID %d, got %d", pythData.Slot, chainlinkData.RoundID.Int64())
+	if pythData.GetIdentifier() != pythData.ID {
+		t.Errorf("Expected identifier %s, got %s", pythData.ID, pythData.GetIdentifier())
 	}
 
-	// Convert back to PythPriceData
-	convertedBack := monitor.convertToPythPriceData(chainlinkData, pythData.ID)
-
-	if convertedBack == nil {
-		t.Fatal("Expected converted back data to be non-nil")
-	}
-
-	if convertedBack.Price.Cmp(pythData.Price) != 0 {
-		t.Errorf("Expected price %s, got %s", pythData.Price.String(), convertedBack.Price.String())
+	if pythData.GetPrice().Cmp(pythData.Price) != 0 {
+		t.Errorf("Expected price %s, got %s", pythData.Price.String(), pythData.GetPrice().String())
 	}
 }
 

@@ -116,7 +116,7 @@ func (c *HermesClient) buildURL(endpoint string) *url.URL {
 	}
 
 	u, _ := url.Parse(baseURL)
-	u.Path = strings.TrimSuffix(u.Path, "/") + "/v2/" + endpoint
+	u.Path = strings.TrimSuffix(u.Path, "/") + endpoint
 	return u
 }
 
@@ -150,7 +150,7 @@ func (c *HermesClient) appendURLSearchParams(u *url.URL, params map[string]inter
 
 // GetPriceFeeds fetches the set of available price feeds
 func (c *HermesClient) GetPriceFeeds(ctx context.Context, options *GetPriceFeedsOptions) ([]PriceFeedMetadata, error) {
-	u := c.buildURL("price_feeds")
+	u := c.buildURL("v2/price_feeds")
 
 	if options != nil {
 		params := make(map[string]interface{})
@@ -170,7 +170,7 @@ func (c *HermesClient) GetPriceFeeds(ctx context.Context, options *GetPriceFeeds
 
 // GetLatestPriceUpdates fetches the latest price updates for a set of price feed IDs
 func (c *HermesClient) GetLatestPriceUpdates(ctx context.Context, ids []HexString, options *GetLatestPriceUpdatesOptions) (*PriceUpdate, error) {
-	u := c.buildURL("updates/price/latest")
+	u := c.buildURL("v2/updates/price/latest")
 
 	// Add price IDs as query parameters
 	query := u.Query()
@@ -200,7 +200,7 @@ func (c *HermesClient) GetLatestPriceUpdates(ctx context.Context, ids []HexStrin
 
 // GetPriceUpdatesAtTimestamp fetches price updates for a set of price feed IDs at a given timestamp
 func (c *HermesClient) GetPriceUpdatesAtTimestamp(ctx context.Context, publishTime UnixTimestamp, ids []HexString, options *GetPriceUpdatesAtTimestampOptions) (*PriceUpdate, error) {
-	u := c.buildURL(fmt.Sprintf("updates/price/%d", publishTime))
+	u := c.buildURL(fmt.Sprintf("v2/updates/price/%d", publishTime))
 
 	// Add price IDs as query parameters
 	query := u.Query()
@@ -230,7 +230,7 @@ func (c *HermesClient) GetPriceUpdatesAtTimestamp(ctx context.Context, publishTi
 
 // GetLatestTwaps fetches the latest TWAP (time weighted average price) for a set of price feed IDs
 func (c *HermesClient) GetLatestTwaps(ctx context.Context, ids []HexString, windowSeconds int, options *GetLatestTwapsOptions) (*TwapsResponse, error) {
-	u := c.buildURL(fmt.Sprintf("updates/twap/%d/latest", windowSeconds))
+	u := c.buildURL(fmt.Sprintf("v2/updates/twap/%d/latest", windowSeconds))
 
 	// Add price IDs as query parameters
 	query := u.Query()
@@ -260,7 +260,7 @@ func (c *HermesClient) GetLatestTwaps(ctx context.Context, ids []HexString, wind
 
 // GetLatestPublisherCaps fetches the latest publisher stake caps
 func (c *HermesClient) GetLatestPublisherCaps(ctx context.Context, options *GetLatestPublisherCapsOptions) (*PublisherCaps, error) {
-	u := c.buildURL("updates/publisher_stake_caps/latest")
+	u := c.buildURL("v2/updates/publisher_stake_caps/latest")
 
 	if options != nil {
 		params := make(map[string]interface{})

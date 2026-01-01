@@ -5,6 +5,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/morpheum-labs/pricefeeding/types"
 )
 
 // PriceCacheManager manages the local price cache with persistence
@@ -23,23 +25,50 @@ func NewPriceCacheManager() *PriceCacheManager {
 }
 
 // UpdatePrice updates a price in the cache
-func (pcm *PriceCacheManager) UpdatePrice(networkID uint64, feedAddress string, priceData *PriceData) {
-	pcm.cache.UpdatePrice(networkID, feedAddress, priceData)
+func (pcm *PriceCacheManager) UpdatePrice(networkID uint64, identifier string, source types.PriceSource, priceInfo types.PriceInfo) {
+	pcm.cache.UpdatePrice(networkID, identifier, source, priceInfo)
 }
 
 // GetPrice retrieves a price from the cache
-func (pcm *PriceCacheManager) GetPrice(networkID uint64, feedAddress string) (*PriceData, error) {
-	return pcm.cache.GetPrice(networkID, feedAddress)
+func (pcm *PriceCacheManager) GetPrice(networkID uint64, identifier string, source types.PriceSource) (types.PriceInfo, error) {
+	return pcm.cache.GetPrice(networkID, identifier, source)
 }
 
 // GetAllPrices retrieves all prices for a network
-func (pcm *PriceCacheManager) GetAllPrices(networkID uint64) map[string]*PriceData {
+func (pcm *PriceCacheManager) GetAllPrices(networkID uint64) map[string]types.PriceInfo {
 	return pcm.cache.GetAllPrices(networkID)
 }
 
+// GetAllPricesBySource retrieves all prices for a network filtered by source
+func (pcm *PriceCacheManager) GetAllPricesBySource(networkID uint64, source types.PriceSource) map[string]types.PriceInfo {
+	return pcm.cache.GetAllPricesBySource(networkID, source)
+}
+
 // AddFeed adds a price feed to monitor
-func (pcm *PriceCacheManager) AddFeed(networkID uint64, feedAddress string) {
-	pcm.cache.AddFeed(networkID, feedAddress)
+func (pcm *PriceCacheManager) AddFeed(networkID uint64, identifier string, source types.PriceSource) {
+	pcm.cache.AddFeed(networkID, identifier, source)
+}
+
+// Legacy methods for backward compatibility (deprecated)
+
+// UpdatePriceLegacy updates a price using the old format (assumes Chainlink)
+func (pcm *PriceCacheManager) UpdatePriceLegacy(networkID uint64, feedAddress string, priceData *PriceData) {
+	pcm.cache.UpdatePriceLegacy(networkID, feedAddress, priceData)
+}
+
+// GetPriceLegacy retrieves a price using the old format (assumes Chainlink)
+func (pcm *PriceCacheManager) GetPriceLegacy(networkID uint64, feedAddress string) (*PriceData, error) {
+	return pcm.cache.GetPriceLegacy(networkID, feedAddress)
+}
+
+// GetAllPricesLegacy retrieves all prices using the old format (assumes Chainlink)
+func (pcm *PriceCacheManager) GetAllPricesLegacy(networkID uint64) map[string]*PriceData {
+	return pcm.cache.GetAllPricesLegacy(networkID)
+}
+
+// AddFeedLegacy adds a price feed using the old format (assumes Chainlink)
+func (pcm *PriceCacheManager) AddFeedLegacy(networkID uint64, feedAddress string) {
+	pcm.cache.AddFeedLegacy(networkID, feedAddress)
 }
 
 // UpdateLastSaved updates the last saved timestamp

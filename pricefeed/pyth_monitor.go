@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/morpheum-labs/pricefeeding/pyth"
+	"github.com/morpheum-labs/pricefeeding/types"
 )
 
-// PythPriceData represents price information from Pyth
-type PythPriceData struct {
+// PythPriceResetData represents price information from Pyth (deprecated, use types.PythPrice)
+// Kept for backward compatibility during migration
+type PythPriceResetData struct {
 	ID            string    `json:"id"`
 	Symbol        string    `json:"symbol,omitempty"`
 	Price         *big.Int  `json:"price"`
@@ -63,35 +65,41 @@ func (ppm *PythPriceMonitor) AddPriceFeed(priceID, symbol string) {
 	defer ppm.mu.Unlock()
 
 	ppm.priceFeeds[priceID] = symbol
+	networkID := uint64(types.OracleNetworkIDPyth)
+	ppm.cacheManager.AddFeed(networkID, priceID, types.SourcePyth)
 	log.Printf("Added Pyth price feed: %s (%s)", symbol, priceID)
 }
 
 // GetPrice retrieves the latest price for a specific feed
-func (ppm *PythPriceMonitor) GetPrice(priceID string) (*PythPriceData, error) {
-	// Convert priceID to a networkID (using 0 as default for Pyth)
-	// In a real implementation, you might want to map priceIDs to specific networks
-	networkID := uint64(0)
+func (ppm *PythPriceMonitor) GetPrice(priceID string) (*types.PythPrice, error) {
+	networkID := uint64(types.OracleNetworkIDPyth)
 
 	// Try to get from cache first
-	if priceData, err := ppm.cacheManager.GetPrice(networkID, priceID); err == nil {
-		// Convert PriceData to PythPriceData
-		return ppm.convertToPythPriceData(priceData, priceID), nil
+	priceInfo, err := ppm.cacheManager.GetPrice(networkID, priceID, types.SourcePyth)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, fmt.Errorf("no price data for feed %s", priceID)
+	if pythPrice, ok := priceInfo.(*types.PythPrice); ok {
+		return pythPrice, nil
+	}
+
+	return nil, fmt.Errorf("price info is not Pyth data")
 }
 
 // GetAllPrices retrieves all prices for all monitored feeds
-func (ppm *PythPriceMonitor) GetAllPrices() map[string]*PythPriceData {
+func (ppm *PythPriceMonitor) GetAllPrices() map[string]*types.PythPrice {
 	ppm.mu.RLock()
 	defer ppm.mu.RUnlock()
 
-	results := make(map[string]*PythPriceData)
-	networkID := uint64(0) // Default network for Pyth
+	results := make(map[string]*types.PythPrice)
+	networkID := uint64(types.OracleNetworkIDPyth)
 
-	allPrices := ppm.cacheManager.GetAllPrices(networkID)
-	for priceID, priceData := range allPrices {
-		results[priceID] = ppm.convertToPythPriceData(priceData, priceID)
+	allPrices := ppm.cacheManager.GetAllPricesBySource(networkID, types.SourcePyth)
+	for priceID, priceInfo := range allPrices {
+		if pythPrice, ok := priceInfo.(*types.PythPrice); ok {
+			results[priceID] = pythPrice
+		}
 	}
 
 	return results
@@ -128,8 +136,8 @@ func (ppm *PythPriceMonitor) fetchPriceData() error {
 		pythPriceData := ppm.convertPythFeedToPriceData(feed)
 
 		// Update cache
-		networkID := uint64(0) // Default network for Pyth
-		ppm.cacheManager.UpdatePrice(networkID, feed.ID, ppm.convertToChainlinkPriceData(pythPriceData))
+		networkID := uint64(types.OracleNetworkIDPyth)
+		ppm.cacheManager.UpdatePrice(networkID, feed.ID, types.SourcePyth, pythPriceData)
 
 		// Update lastSaved timestamp in cache manager
 		ppm.cacheManager.UpdateLastSaved()
@@ -143,13 +151,13 @@ func (ppm *PythPriceMonitor) fetchPriceData() error {
 	return nil
 }
 
-// convertPythFeedToPriceData converts a Pyth PriceFeed to our PythPriceData structure
-func (ppm *PythPriceMonitor) convertPythFeedToPriceData(feed pyth.PriceFeed) *PythPriceData {
+// convertPythFeedToPriceData converts a Pyth PriceFeed to our PythPrice structure
+func (ppm *PythPriceMonitor) convertPythFeedToPriceData(feed pyth.PriceFeed) *types.PythPrice {
 	// Convert price string to big.Int
 	price, _ := new(big.Int).SetString(feed.Price.Price, 10)
 	confidence, _ := new(big.Int).SetString(feed.Price.Conf, 10)
 
-	pythPriceData := &PythPriceData{
+	pythPriceData := &types.PythPrice{
 		ID:          feed.ID,
 		Price:       price,
 		Confidence:  confidence,
@@ -157,7 +165,7 @@ func (ppm *PythPriceMonitor) convertPythFeedToPriceData(feed pyth.PriceFeed) *Py
 		PublishTime: feed.Price.PublishTime,
 		Slot:        feed.Metadata.Slot,
 		Timestamp:   time.Now(),
-		NetworkID:   uint64(0), // Default network for Pyth
+		NetworkID:   uint64(types.OracleNetworkIDPyth),
 	}
 
 	// Add symbol if available
@@ -178,44 +186,11 @@ func (ppm *PythPriceMonitor) convertPythFeedToPriceData(feed pyth.PriceFeed) *Py
 	return pythPriceData
 }
 
-// convertToChainlinkPriceData converts PythPriceData to PriceData for cache compatibility
-func (ppm *PythPriceMonitor) convertToChainlinkPriceData(pythData *PythPriceData) *PriceData {
-	return &PriceData{
-		RoundID:         big.NewInt(pythData.Slot),
-		Answer:          pythData.Price,
-		StartedAt:       big.NewInt(pythData.PublishTime),
-		UpdatedAt:       big.NewInt(time.Now().Unix()),
-		AnsweredInRound: big.NewInt(pythData.Slot),
-		Timestamp:       pythData.Timestamp,
-		NetworkID:       pythData.NetworkID,
-	}
-}
-
-// convertToPythPriceData converts PriceData back to PythPriceData
-func (ppm *PythPriceMonitor) convertToPythPriceData(priceData *PriceData, priceID string) *PythPriceData {
-	pythData := &PythPriceData{
-		ID:          priceID,
-		Price:       priceData.Answer,
-		Confidence:  big.NewInt(0), // Default confidence
-		Exponent:    0,             // Default exponent
-		PublishTime: priceData.StartedAt.Int64(),
-		Slot:        priceData.RoundID.Int64(),
-		Timestamp:   priceData.Timestamp,
-		NetworkID:   priceData.NetworkID,
-	}
-
-	// Add symbol if available
-	ppm.mu.RLock()
-	if symbol, exists := ppm.priceFeeds[priceID]; exists {
-		pythData.Symbol = symbol
-	}
-	ppm.mu.RUnlock()
-
-	return pythData
-}
+// Legacy conversion methods (deprecated, kept for backward compatibility)
+// These are no longer needed with the unified cache system
 
 // printPriceUpdate prints price update information
-func (ppm *PythPriceMonitor) printPriceUpdate(priceData *PythPriceData) {
+func (ppm *PythPriceMonitor) printPriceUpdate(priceData *types.PythPrice) {
 	// Calculate actual price from price and exponent
 	actualPrice := new(big.Float).SetInt(priceData.Price)
 

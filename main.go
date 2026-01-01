@@ -14,6 +14,7 @@ import (
 
 	"github.com/morpheum-labs/pricefeeding/pricefeed"
 	"github.com/morpheum-labs/pricefeeding/rpcscan"
+	"github.com/morpheum-labs/pricefeeding/types"
 	"gopkg.in/yaml.v2"
 )
 
@@ -133,7 +134,7 @@ func chainlink_start() {
 			if feed.Address != "" && feed.Address != "0x" {
 				// Use the enhanced method with symbol
 				priceMonitor.AddPriceFeedWithSymbol(networkID, feed.Address, feed.Symbol)
-				priceCacheManager.AddFeed(networkID, feed.Address)
+				priceCacheManager.AddFeed(networkID, feed.Address, types.SourceChainlink)
 				log.Printf("Added price feed %s (%s) for network %d - %s", feed.Name, feed.Address, networkID, feed.Symbol)
 			} else {
 				log.Printf("Skipping invalid feed %s with address: %s", feed.Name, feed.Address)
@@ -167,7 +168,7 @@ func chainlink_start() {
 				for networkID := range clients {
 					prices := priceMonitor.GetAllPrices(networkID)
 					for feedAddress, priceData := range prices {
-						priceCacheManager.UpdatePrice(networkID, feedAddress, priceData)
+						priceCacheManager.UpdatePrice(networkID, feedAddress, types.SourceChainlink, priceData)
 					}
 				}
 			}
@@ -210,7 +211,8 @@ func chainlink_start() {
 				// Display current prices for all networks
 				clients := networkConfig.GetAllClients()
 				for networkID := range clients {
-					prices := priceCacheManager.GetAllPrices(networkID)
+					// Get Chainlink prices only
+					prices := priceCacheManager.GetAllPricesBySource(networkID, types.SourceChainlink)
 					if len(prices) > 0 {
 						log.Printf("📊 CURRENT CHAINLINK PRICES - Network %d:", networkID)
 
@@ -221,7 +223,13 @@ func chainlink_start() {
 							feedMap[feed.Address] = feed
 						}
 
-						for feedAddress, priceData := range prices {
+						for feedAddress, priceInfo := range prices {
+							// Type assert to ChainlinkPrice
+							priceData, ok := priceInfo.(*types.ChainlinkPrice)
+							if !ok {
+								continue
+							}
+
 							// Find feed info
 							feedInfo, exists := feedMap[feedAddress]
 							var feedName, symbol string
@@ -406,11 +414,23 @@ func pyth_start() {
 				// Also print all current prices
 				allPrices := monitor.GetAllPrices()
 				if len(allPrices) > 0 {
-					log.Printf("📊 CURRENT PRICES:")
-					for _, priceData := range allPrices {
-						log.Printf("  %s: %s (Updated: %s)",
+					log.Printf("📊 CURRENT PYTH PRICES:")
+					for priceID, priceData := range allPrices {
+						// Calculate actual price from price and exponent
+						actualPrice := new(big.Float).SetInt(priceData.Price)
+						var exponent *big.Float
+						if priceData.Exponent < 0 {
+							exponent = new(big.Float).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(-priceData.Exponent)), nil))
+							actualPrice.Quo(actualPrice, exponent)
+						} else {
+							exponent = new(big.Float).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(priceData.Exponent)), nil))
+							actualPrice.Mul(actualPrice, exponent)
+						}
+
+						log.Printf("  %s (%s): %s (Updated: %s)",
 							priceData.Symbol,
-							priceData.Price.String(),
+							priceID,
+							actualPrice.Text('f', 8),
 							priceData.Timestamp.Format("15:04:05"))
 					}
 				}

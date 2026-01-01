@@ -195,7 +195,7 @@ func (es *eventSource) handleError(err error) {
 
 // GetPriceUpdatesStream fetches streaming price updates for a set of price feed IDs
 func (c *HermesClient) GetPriceUpdatesStream(ctx context.Context, ids []HexString, options *GetPriceUpdatesStreamOptions) (EventSource, error) {
-	u := c.buildURL("updates/price/stream")
+	u := c.buildURL("v2/updates/price/stream")
 
 	// Add price IDs as query parameters
 	query := u.Query()

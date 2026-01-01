@@ -8,14 +8,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	aggregatorv3 "github.com/morpheum-labs/pricefeeding/aggregatorv3"
+	"github.com/morpheum-labs/pricefeeding/chainlink"
+	"github.com/morpheum-labs/pricefeeding/rpcscan"
+	"github.com/morpheum-labs/pricefeeding/types"
 )
 
-// PriceData represents price information from Chainlink
+// PriceData represents price information from Chainlink (deprecated, use ChainlinkPrice)
+// Kept for backward compatibility during migration
 type PriceData struct {
 	RoundID         *big.Int
 	Answer          *big.Int
@@ -27,86 +28,200 @@ type PriceData struct {
 }
 
 // PriceCache stores price data with thread-safe access
+// Uses PriceInfo interface to support multiple sources (Chainlink, Pyth, etc.)
 type PriceCache struct {
 	mu    sync.RWMutex
-	data  map[uint64]map[string]*PriceData // networkID -> feedAddress -> priceData
-	feeds map[uint64][]string              // networkID -> list of feed addresses
+	data  map[uint64]map[string]types.PriceInfo // networkID -> prefixedIdentifier -> PriceInfo
+	feeds map[uint64][]string                   // networkID -> list of prefixed identifiers (e.g., "chainlink:0xaddr", "pyth:id")
 }
 
 // NewPriceCache creates a new price cache
 func NewPriceCache() *PriceCache {
 	return &PriceCache{
-		data:  make(map[uint64]map[string]*PriceData),
+		data:  make(map[uint64]map[string]types.PriceInfo),
 		feeds: make(map[uint64][]string),
 	}
 }
 
+// makePrefixedIdentifier creates a prefixed identifier for a price source
+func makePrefixedIdentifier(source types.PriceSource, identifier string) string {
+	return string(source) + ":" + identifier
+}
+
 // AddFeed adds a price feed to monitor for a specific network
-func (pc *PriceCache) AddFeed(networkID uint64, feedAddress string) {
+func (pc *PriceCache) AddFeed(networkID uint64, identifier string, source types.PriceSource) {
 	pc.mu.Lock()
 	defer pc.mu.Unlock()
 
+	prefixed := makePrefixedIdentifier(source, identifier)
+
 	if pc.data[networkID] == nil {
-		pc.data[networkID] = make(map[string]*PriceData)
+		pc.data[networkID] = make(map[string]types.PriceInfo)
 		pc.feeds[networkID] = make([]string, 0)
 	}
 
 	// Check if feed already exists
 	for _, existing := range pc.feeds[networkID] {
-		if existing == feedAddress {
+		if existing == prefixed {
 			return // Already exists
 		}
 	}
 
-	pc.feeds[networkID] = append(pc.feeds[networkID], feedAddress)
-	log.Printf("Added price feed %s for network %d", feedAddress, networkID)
+	pc.feeds[networkID] = append(pc.feeds[networkID], prefixed)
+	log.Printf("Added price feed %s for network %d (source: %s)", identifier, networkID, source)
 }
 
 // GetPrice retrieves the latest price for a specific feed
-func (pc *PriceCache) GetPrice(networkID uint64, feedAddress string) (*PriceData, error) {
+func (pc *PriceCache) GetPrice(networkID uint64, identifier string, source types.PriceSource) (types.PriceInfo, error) {
 	pc.mu.RLock()
 	defer pc.mu.RUnlock()
+
+	prefixed := makePrefixedIdentifier(source, identifier)
 
 	if pc.data[networkID] == nil {
 		return nil, fmt.Errorf("no data for network %d", networkID)
 	}
 
-	priceData, exists := pc.data[networkID][feedAddress]
+	priceInfo, exists := pc.data[networkID][prefixed]
 	if !exists {
-		return nil, fmt.Errorf("no price data for feed %s on network %d", feedAddress, networkID)
+		return nil, fmt.Errorf("no price data for feed %s on network %d (source: %s)", identifier, networkID, source)
 	}
 
-	return priceData, nil
+	return priceInfo, nil
 }
 
 // GetAllPrices retrieves all prices for a specific network
-func (pc *PriceCache) GetAllPrices(networkID uint64) map[string]*PriceData {
+func (pc *PriceCache) GetAllPrices(networkID uint64) map[string]types.PriceInfo {
 	pc.mu.RLock()
 	defer pc.mu.RUnlock()
 
 	if pc.data[networkID] == nil {
-		return make(map[string]*PriceData)
+		return make(map[string]types.PriceInfo)
 	}
 
 	// Create a copy to avoid race conditions
-	result := make(map[string]*PriceData)
-	for address, priceData := range pc.data[networkID] {
-		result[address] = priceData
+	result := make(map[string]types.PriceInfo)
+	for prefixed, priceInfo := range pc.data[networkID] {
+		result[prefixed] = priceInfo
+	}
+
+	return result
+}
+
+// GetAllPricesBySource retrieves all prices for a specific network and source
+func (pc *PriceCache) GetAllPricesBySource(networkID uint64, source types.PriceSource) map[string]types.PriceInfo {
+	pc.mu.RLock()
+	defer pc.mu.RUnlock()
+
+	result := make(map[string]types.PriceInfo)
+	if pc.data[networkID] == nil {
+		return result
+	}
+
+	prefix := string(source) + ":"
+	for prefixed, priceInfo := range pc.data[networkID] {
+		if strings.HasPrefix(prefixed, prefix) {
+			// Extract the identifier (remove the prefix)
+			identifier := strings.TrimPrefix(prefixed, prefix)
+			result[identifier] = priceInfo
+		}
 	}
 
 	return result
 }
 
 // UpdatePrice updates the price data for a specific feed
-func (pc *PriceCache) UpdatePrice(networkID uint64, feedAddress string, priceData *PriceData) {
+func (pc *PriceCache) UpdatePrice(networkID uint64, identifier string, source types.PriceSource, priceInfo types.PriceInfo) {
 	pc.mu.Lock()
 	defer pc.mu.Unlock()
 
+	prefixed := makePrefixedIdentifier(source, identifier)
+
 	if pc.data[networkID] == nil {
-		pc.data[networkID] = make(map[string]*PriceData)
+		pc.data[networkID] = make(map[string]types.PriceInfo)
 	}
 
-	pc.data[networkID][feedAddress] = priceData
+	pc.data[networkID][prefixed] = priceInfo
+
+	// Ensure feed is in the feeds list
+	found := false
+	for _, existing := range pc.feeds[networkID] {
+		if existing == prefixed {
+			found = true
+			break
+		}
+	}
+	if !found {
+		pc.feeds[networkID] = append(pc.feeds[networkID], prefixed)
+	}
+}
+
+// Legacy methods for backward compatibility (deprecated)
+// These will be removed in a future version
+
+// AddFeedLegacy adds a price feed using the old format (assumes Chainlink)
+func (pc *PriceCache) AddFeedLegacy(networkID uint64, feedAddress string) {
+	pc.AddFeed(networkID, feedAddress, types.SourceChainlink)
+}
+
+// GetPriceLegacy retrieves price using the old format (assumes Chainlink)
+func (pc *PriceCache) GetPriceLegacy(networkID uint64, feedAddress string) (*PriceData, error) {
+	priceInfo, err := pc.GetPrice(networkID, feedAddress, types.SourceChainlink)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert ChainlinkPrice to PriceData for backward compatibility
+	if clPrice, ok := priceInfo.(*types.ChainlinkPrice); ok {
+		return &PriceData{
+			RoundID:         clPrice.RoundID,
+			Answer:          clPrice.Answer,
+			StartedAt:       clPrice.StartedAt,
+			UpdatedAt:       clPrice.UpdatedAt,
+			AnsweredInRound: clPrice.AnsweredInRound,
+			Timestamp:       clPrice.Timestamp,
+			NetworkID:       clPrice.NetworkID,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("price info is not Chainlink data")
+}
+
+// GetAllPricesLegacy retrieves all prices using the old format (assumes Chainlink)
+func (pc *PriceCache) GetAllPricesLegacy(networkID uint64) map[string]*PriceData {
+	chainlinkPrices := pc.GetAllPricesBySource(networkID, types.SourceChainlink)
+	result := make(map[string]*PriceData)
+
+	for identifier, priceInfo := range chainlinkPrices {
+		if clPrice, ok := priceInfo.(*types.ChainlinkPrice); ok {
+			result[identifier] = &PriceData{
+				RoundID:         clPrice.RoundID,
+				Answer:          clPrice.Answer,
+				StartedAt:       clPrice.StartedAt,
+				UpdatedAt:       clPrice.UpdatedAt,
+				AnsweredInRound: clPrice.AnsweredInRound,
+				Timestamp:       clPrice.Timestamp,
+				NetworkID:       clPrice.NetworkID,
+			}
+		}
+	}
+
+	return result
+}
+
+// UpdatePriceLegacy updates price using the old format (assumes Chainlink)
+func (pc *PriceCache) UpdatePriceLegacy(networkID uint64, feedAddress string, priceData *PriceData) {
+	clPrice := &types.ChainlinkPrice{
+		RoundID:         priceData.RoundID,
+		Answer:          priceData.Answer,
+		StartedAt:       priceData.StartedAt,
+		UpdatedAt:       priceData.UpdatedAt,
+		AnsweredInRound: priceData.AnsweredInRound,
+		Timestamp:       priceData.Timestamp,
+		NetworkID:       priceData.NetworkID,
+		FeedAddress:     feedAddress,
+	}
+	pc.UpdatePrice(networkID, feedAddress, types.SourceChainlink, clPrice)
 }
 
 // PriceMonitor handles monitoring of Chainlink price feeds
@@ -116,9 +231,9 @@ type PriceMonitor struct {
 	mu            sync.RWMutex
 	stopChan      chan struct{}
 	interval      time.Duration
-	networkConfig interface{}                  // Will hold reference to NetworkConfiguration for RPC switching
-	feedSymbols   map[uint64]map[string]string // networkID -> feedAddress -> symbol mapping
-	immediateMode bool                         // If true, prints prices immediately when received
+	networkConfig *rpcscan.NetworkConfiguration // Network configuration for RPC switching
+	feedSymbols   map[uint64]map[string]string  // networkID -> feedAddress -> symbol mapping
+	immediateMode bool                          // If true, prints prices immediately when received
 }
 
 // NewPriceMonitor creates a new price monitor
@@ -163,12 +278,12 @@ func (pm *PriceMonitor) UpdateClient(networkID uint64, client *ethclient.Client)
 
 // AddPriceFeed adds a price feed to monitor
 func (pm *PriceMonitor) AddPriceFeed(networkID uint64, feedAddress string) {
-	pm.cache.AddFeed(networkID, feedAddress)
+	pm.cache.AddFeed(networkID, feedAddress, types.SourceChainlink)
 }
 
 // AddPriceFeedWithSymbol adds a price feed to monitor with a symbol for better display
 func (pm *PriceMonitor) AddPriceFeedWithSymbol(networkID uint64, feedAddress string, symbol string) {
-	pm.cache.AddFeed(networkID, feedAddress)
+	pm.cache.AddFeed(networkID, feedAddress, types.SourceChainlink)
 
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -181,68 +296,61 @@ func (pm *PriceMonitor) AddPriceFeedWithSymbol(networkID uint64, feedAddress str
 }
 
 // GetPrice retrieves the latest price for a specific feed
-func (pm *PriceMonitor) GetPrice(networkID uint64, feedAddress string) (*PriceData, error) {
-	return pm.cache.GetPrice(networkID, feedAddress)
+func (pm *PriceMonitor) GetPrice(networkID uint64, feedAddress string) (*types.ChainlinkPrice, error) {
+	priceInfo, err := pm.cache.GetPrice(networkID, feedAddress, types.SourceChainlink)
+	if err != nil {
+		return nil, err
+	}
+	if clPrice, ok := priceInfo.(*types.ChainlinkPrice); ok {
+		return clPrice, nil
+	}
+	return nil, fmt.Errorf("price info is not Chainlink data")
 }
 
-// GetAllPrices retrieves all prices for a specific network
-func (pm *PriceMonitor) GetAllPrices(networkID uint64) map[string]*PriceData {
-	return pm.cache.GetAllPrices(networkID)
+// GetAllPrices retrieves all prices for a specific network (Chainlink only)
+func (pm *PriceMonitor) GetAllPrices(networkID uint64) map[string]*types.ChainlinkPrice {
+	allPrices := pm.cache.GetAllPricesBySource(networkID, types.SourceChainlink)
+	result := make(map[string]*types.ChainlinkPrice)
+	for identifier, priceInfo := range allPrices {
+		if clPrice, ok := priceInfo.(*types.ChainlinkPrice); ok {
+			result[identifier] = clPrice
+		}
+	}
+	return result
 }
 
 // fetchPriceData fetches price data from a specific feed
-func (pm *PriceMonitor) fetchPriceData(networkID uint64, feedAddress string) (*PriceData, error) {
-	return pm.fetchPriceDataWithRetry(networkID, feedAddress, 1)
-}
-
-// fetchPriceDataWithRetry fetches price data with retry logic after RPC switching
-func (pm *PriceMonitor) fetchPriceDataWithRetry(networkID uint64, feedAddress string, attempt int) (*PriceData, error) {
+func (pm *PriceMonitor) fetchPriceData(networkID uint64, feedAddress string) (*types.ChainlinkPrice, error) {
 	pm.mu.RLock()
 	client, exists := pm.clients[networkID]
+	networkConfig := pm.networkConfig
 	pm.mu.RUnlock()
 
 	if !exists {
 		return nil, fmt.Errorf("no client available for network %d", networkID)
 	}
 
-	// Create the aggregator contract instance
-	contractAddress := common.HexToAddress(feedAddress)
-	aggregator, err := aggregatorv3.NewAggregatorV3Interface(contractAddress, client)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create aggregator contract: %v", err)
-	}
-
-	// Get the latest round data
-	roundData, err := aggregator.LatestRoundData(&bind.CallOpts{})
-	if err != nil {
-		// Check if this is the specific error code -32097 that requires immediate RPC switching
-		if pm.isErrorCode32097(err) && attempt == 1 {
-			log.Printf("Detected error code -32097 for network %d, triggering immediate RPC switch", networkID)
-			// Trigger immediate RPC switching for this network
-			pm.triggerImmediateRPCSwitch(networkID)
-
-			// Wait a moment for the RPC switch to complete
-			time.Sleep(2 * time.Second)
-
-			// Retry with the new RPC endpoint
-			log.Printf("Retrying price fetch for network %d with new RPC endpoint (attempt %d)", networkID, attempt+1)
-			return pm.fetchPriceDataWithRetry(networkID, feedAddress, attempt+1)
+	// Create RPC switcher adapter if network config is available
+	var rpcSwitcher chainlink.RPCSwitcher
+	if networkConfig != nil {
+		rpcSwitcher = &rpcSwitcherAdapter{
+			networkConfig: networkConfig,
+			priceMonitor:  pm,
+			networkID:     networkID,
 		}
-		return nil, fmt.Errorf("failed to get latest round data: %v", err)
 	}
 
-	// Convert to our PriceData structure
-	priceData := &PriceData{
-		RoundID:         roundData.RoundId,
-		Answer:          roundData.Answer,
-		StartedAt:       roundData.StartedAt,
-		UpdatedAt:       roundData.UpdatedAt,
-		AnsweredInRound: roundData.AnsweredInRound,
-		Timestamp:       time.Now(),
-		NetworkID:       networkID,
+	// Use the chainlink package to fetch price data
+	opts := chainlink.FetchPriceDataOptions{
+		NetworkID:   networkID,
+		FeedAddress: feedAddress,
+		Client:      client,
+		RPCSwitcher: rpcSwitcher,
+		MaxRetries:  1,
+		RetryDelay:  2 * time.Second,
 	}
 
-	return priceData, nil
+	return chainlink.FetchPriceData(opts)
 }
 
 // updateAllPrices updates all monitored price feeds efficiently
@@ -270,30 +378,33 @@ func (pm *PriceMonitor) updateAllPrices() {
 			continue // Skip if no client available
 		}
 
-		for _, feedAddress := range feedList {
+		for _, prefixedFeed := range feedList {
 			wg.Add(1)
-			go func(netID uint64, feedAddr string) {
+			go func(netID uint64, prefixed string) {
 				defer wg.Done()
 
 				// Acquire semaphore
 				semaphore <- struct{}{}
 				defer func() { <-semaphore }()
 
-				priceData, err := pm.fetchPriceData(netID, feedAddr)
+				// Extract feed address from prefixed identifier (e.g., "chainlink:0xaddr" -> "0xaddr")
+				feedAddress := strings.TrimPrefix(prefixed, string(types.SourceChainlink)+":")
+
+				priceData, err := pm.fetchPriceData(netID, feedAddress)
 				if err != nil {
-					log.Printf("Failed to fetch price data for feed %s on network %d: %v", feedAddr, netID, err)
+					log.Printf("Failed to fetch price data for feed %s on network %d: %v", feedAddress, netID, err)
 					return
 				}
 
-				pm.cache.UpdatePrice(netID, feedAddr, priceData)
+				pm.cache.UpdatePrice(netID, feedAddress, types.SourceChainlink, priceData)
 
 				// Print immediately if in immediate mode
 				if pm.immediateMode {
-					pm.printPriceUpdate(netID, feedAddr, priceData)
+					pm.printPriceUpdate(netID, feedAddress, priceData)
 				} else {
-					log.Printf("Updated price for feed %s on network %d: %s", feedAddr, netID, priceData.Answer.String())
+					log.Printf("Updated price for feed %s on network %d: %s", feedAddress, netID, priceData.Answer.String())
 				}
-			}(networkID, feedAddress)
+			}(networkID, prefixedFeed)
 		}
 	}
 
@@ -301,7 +412,7 @@ func (pm *PriceMonitor) updateAllPrices() {
 }
 
 // printPriceUpdate prints price update information in a formatted way
-func (pm *PriceMonitor) printPriceUpdate(networkID uint64, feedAddress string, priceData *PriceData) {
+func (pm *PriceMonitor) printPriceUpdate(networkID uint64, feedAddress string, priceData *types.ChainlinkPrice) {
 	// Get symbol if available
 	pm.mu.RLock()
 	symbol := "Unknown"
@@ -363,7 +474,7 @@ func (pm *PriceMonitor) GetCache() *PriceCache {
 }
 
 // SetNetworkConfig sets the network configuration for RPC switching
-func (pm *PriceMonitor) SetNetworkConfig(networkConfig interface{}) {
+func (pm *PriceMonitor) SetNetworkConfig(networkConfig *rpcscan.NetworkConfiguration) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 	pm.networkConfig = networkConfig
@@ -399,7 +510,9 @@ func (pm *PriceMonitor) PrintStatus() {
 			fmt.Printf("   Network %d: %d feeds\n", networkID, len(feeds))
 			pm.mu.RLock()
 			if networkSymbols, exists := pm.feedSymbols[networkID]; exists {
-				for _, feedAddress := range feeds {
+				for _, prefixedFeed := range feeds {
+					// Extract feed address from prefixed identifier
+					feedAddress := strings.TrimPrefix(prefixedFeed, string(types.SourceChainlink)+":")
 					if symbol, exists := networkSymbols[feedAddress]; exists {
 						fmt.Printf("     - %s (%s)\n", symbol, feedAddress)
 					} else {
@@ -407,7 +520,9 @@ func (pm *PriceMonitor) PrintStatus() {
 					}
 				}
 			} else {
-				for _, feedAddress := range feeds {
+				for _, prefixedFeed := range feeds {
+					// Extract feed address from prefixed identifier
+					feedAddress := strings.TrimPrefix(prefixedFeed, string(types.SourceChainlink)+":")
 					fmt.Printf("     - Unknown (%s)\n", feedAddress)
 				}
 			}
@@ -430,53 +545,30 @@ func (pm *PriceMonitor) GetFeedSymbol(networkID uint64, feedAddress string) stri
 	return "Unknown"
 }
 
-// isErrorCode32097 checks if the error contains the specific error code -32097
-func (pm *PriceMonitor) isErrorCode32097(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	errStr := err.Error()
-	// Check for various forms of the error code -32097
-	return strings.Contains(errStr, "-32097") ||
-		strings.Contains(errStr, "32097") ||
-		strings.Contains(errStr, "execution reverted") ||
-		strings.Contains(errStr, "revert")
+// rpcSwitcherAdapter adapts NetworkConfiguration to chainlink.RPCSwitcher interface
+type rpcSwitcherAdapter struct {
+	networkConfig *rpcscan.NetworkConfiguration
+	priceMonitor  *PriceMonitor
+	networkID     uint64
 }
 
-// triggerImmediateRPCSwitch triggers immediate RPC switching for a specific network
-func (pm *PriceMonitor) triggerImmediateRPCSwitch(networkID uint64) {
-	log.Printf("Triggering immediate RPC switch for network %d", networkID)
+// SwitchRPCEndpointImmediately switches to a different RPC endpoint
+func (r *rpcSwitcherAdapter) SwitchRPCEndpointImmediately(networkID uint64) error {
+	return r.networkConfig.SwitchRPCEndpointImmediately(networkID)
+}
 
-	if pm.networkConfig != nil {
-		// Type assert to get the actual network configuration
-		if netconf, ok := pm.networkConfig.(interface {
-			SwitchRPCEndpointImmediately(networkID uint64) error
-			GetBestClient(networkID uint64) (interface{}, error)
-		}); ok {
-			// Attempt to switch RPC endpoint immediately
-			err := netconf.SwitchRPCEndpointImmediately(networkID)
-			if err != nil {
-				log.Printf("Failed to switch RPC endpoint for network %d: %v", networkID, err)
-				return
-			}
-
-			// Get the new client and update our local client map
-			newClient, err := netconf.GetBestClient(networkID)
-			if err != nil {
-				log.Printf("Failed to get new client for network %d: %v", networkID, err)
-				return
-			}
-
-			// Update our local client map with the new client
-			if ethClient, ok := newClient.(interface{ GetClient() *ethclient.Client }); ok {
-				pm.UpdateClient(networkID, ethClient.GetClient())
-				log.Printf("Successfully updated local client for network %d after RPC switch", networkID)
-			}
-		} else {
-			log.Printf("Network configuration does not support immediate RPC switching")
-		}
-	} else {
-		log.Printf("No network configuration available for immediate RPC switch on network %d", networkID)
+// GetBestClient returns the best available client for the network
+func (r *rpcSwitcherAdapter) GetBestClient(networkID uint64) (*ethclient.Client, error) {
+	ethClient, err := r.networkConfig.GetBestClient(networkID)
+	if err != nil {
+		return nil, err
 	}
+
+	// Get the underlying ethclient.Client
+	newClient := ethClient.GetClient()
+
+	// Update the price monitor's client map
+	r.priceMonitor.UpdateClient(networkID, newClient)
+
+	return newClient, nil
 }
