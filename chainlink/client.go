@@ -91,10 +91,19 @@ func fetchPriceDataWithRetry(opts FetchPriceDataOptions, attempt int) (*types.Ch
 		return nil, fmt.Errorf("failed to get latest round data: %v", err)
 	}
 
+	// Get decimals from contract
+	decimals, err := aggregator.Decimals(&bind.CallOpts{})
+	if err != nil {
+		// Log warning and use default
+		log.Printf("Warning: Failed to get decimals for feed %s, using default -8: %v", opts.FeedAddress, err)
+		decimals = 8 // Default for most Chainlink feeds
+	}
+
 	// Convert to our ChainlinkPrice structure
 	priceData := &types.ChainlinkPrice{
 		RoundID:         roundData.RoundId,
 		Answer:          roundData.Answer,
+		Exponent:        -int(decimals), // Negative sign as requested
 		StartedAt:       roundData.StartedAt,
 		UpdatedAt:       roundData.UpdatedAt,
 		AnsweredInRound: roundData.AnsweredInRound,

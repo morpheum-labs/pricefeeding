@@ -42,6 +42,13 @@ if err != nil {
 }
 
 fmt.Printf("Price: %s\n", priceData.Answer.String())
+fmt.Printf("Exponent: %d\n", priceData.Exponent) // Negative of decimals (e.g., -8 for 8 decimals)
+
+// Convert to USD using Exponent
+priceFloat := new(big.Float).SetInt(priceData.Answer)
+divisor := new(big.Float).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(-priceData.Exponent)), nil))
+priceFloat.Quo(priceFloat, divisor)
+fmt.Printf("USD Price: %s\n", priceFloat.Text('f', 8))
 ```
 
 ### With RPC Switching
@@ -104,6 +111,13 @@ type FetchPriceDataOptions struct {
 #### `FetchPriceData(opts FetchPriceDataOptions) (*types.ChainlinkPrice, error)`
 Main entry point for fetching Chainlink price data. Handles contract interaction, error detection, and optional RPC switching.
 
+Returns a `ChainlinkPrice` struct that includes:
+- `Answer`: The raw price value from the contract
+- `Exponent`: Negative of the contract's decimals (e.g., -8 for 8 decimals)
+- Other round data fields (RoundID, Timestamp, etc.)
+
+The `Exponent` field is automatically fetched from the contract's `decimals()` function and stored as a negative value to match Pyth's format. This allows consistent price conversion across different oracle sources.
+
 #### `IsErrorCode32097(err error) bool`
 Checks if an error contains the specific error code -32097, which typically indicates execution reverted and may require RPC switching.
 
@@ -113,7 +127,28 @@ The client automatically detects error code -32097 (execution reverted) and can 
 
 ## Integration with Price Monitor
 
-The `pricefeed.PriceMonitor` uses this package internally for all Chainlink contract interactions. The monitor provides an adapter (`rpcSwitcherAdapter`) that bridges the `rpcscan.NetworkConfiguration` to the `chainlink.RPCSwitcher` interface.
+The `pricefeed.CLPriceMonitor` uses this package internally for all Chainlink contract interactions. The monitor provides an adapter (`rpcSwitcherAdapter`) that bridges the `rpcscan.NetworkConfiguration` to the `chainlink.RPCSwitcher` interface.
+
+## Integration with Unified Cache
+
+The Chainlink client returns `*types.ChainlinkPrice` which implements the `types.PriceInfo` interface. This allows seamless integration with the unified price cache system:
+
+- **Unified Storage**: Chainlink prices are stored alongside Pyth prices in the same cache using source-prefixed identifiers (`chainlink:0xfeedaddr`)
+- **Type Safety**: The `PriceInfo` interface ensures consistent operations across different price sources
+- **Cache Integration**: Prices are automatically stored in `PriceCacheManager` when fetched by the monitor
+
+Example integration:
+```go
+// Fetch price data
+priceData, err := chainlink.FetchPriceData(opts)
+if err != nil {
+    log.Fatal(err)
+}
+
+// priceData is *types.ChainlinkPrice which implements types.PriceInfo
+// It can be directly stored in the unified cache:
+cacheManager.UpdatePrice(networkID, feedAddress, types.SourceChainlink, priceData)
+```
 
 ## Dependencies
 

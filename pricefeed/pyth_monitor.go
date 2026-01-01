@@ -41,7 +41,11 @@ type PythPriceMonitor struct {
 }
 
 // NewPythPriceMonitor creates a new Pyth price monitor
-func NewPythPriceMonitor(endpoint string, interval time.Duration, immediateMode bool) *PythPriceMonitor {
+// cacheManager: the price cache manager to use (required)
+// endpoint: the Pyth Hermes API endpoint
+// interval: how often to update prices
+// immediateMode: if true, prints prices immediately when received
+func NewPythPriceMonitor(cacheManager *PriceCacheManager, endpoint string, interval time.Duration, immediateMode bool) *PythPriceMonitor {
 	config := &pyth.HermesClientConfig{
 		Timeout:     &[]pyth.DurationInMs{5000}[0], // 5 second timeout
 		HTTPRetries: &[]int{3}[0],                  // 3 retries
@@ -50,7 +54,7 @@ func NewPythPriceMonitor(endpoint string, interval time.Duration, immediateMode 
 	client := pyth.NewHermesClient(endpoint, config)
 
 	return &PythPriceMonitor{
-		cacheManager:  NewPriceCacheManager(),
+		cacheManager:  cacheManager,
 		client:        client,
 		stopChan:      make(chan struct{}),
 		interval:      interval,

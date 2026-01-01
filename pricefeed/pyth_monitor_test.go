@@ -12,8 +12,9 @@ func TestPythPriceMonitorCreation(t *testing.T) {
 	endpoint := "https://hermes.pyth.network"
 	interval := 5 * time.Second
 	immediateMode := true
+	cacheManager := NewPriceCacheManager()
 
-	monitor := NewPythPriceMonitor(endpoint, interval, immediateMode)
+	monitor := NewPythPriceMonitor(cacheManager, endpoint, interval, immediateMode)
 
 	if monitor == nil {
 		t.Fatal("Expected monitor to be created, got nil")
@@ -37,7 +38,8 @@ func TestPythPriceMonitorCreation(t *testing.T) {
 }
 
 func TestPythPriceMonitorAddFeed(t *testing.T) {
-	monitor := NewPythPriceMonitor("https://hermes.pyth.network", 5*time.Second, true)
+	cacheManager := NewPriceCacheManager()
+	monitor := NewPythPriceMonitor(cacheManager, "https://hermes.pyth.network", 5*time.Second, true)
 
 	priceID := "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
 	symbol := "BTC/USD"
@@ -83,26 +85,31 @@ func TestPythPriceDataStructure(t *testing.T) {
 		t.Errorf("Expected identifier %s, got %s", pythData.ID, pythData.GetIdentifier())
 	}
 
-	if pythData.GetPrice().Cmp(pythData.Price) != 0 {
-		t.Errorf("Expected price %s, got %s", pythData.Price.String(), pythData.GetPrice().String())
+	price, exponent := pythData.GetPrice()
+	if price.Cmp(pythData.Price) != 0 {
+		t.Errorf("Expected price %s, got %s", pythData.Price.String(), price.String())
+	}
+	if exponent != pythData.Exponent {
+		t.Errorf("Expected exponent %d, got %d", pythData.Exponent, exponent)
 	}
 }
 
 func TestCacheManagerIntegration(t *testing.T) {
-	monitor := NewPythPriceMonitor("https://hermes.pyth.network", 5*time.Second, true)
+	cacheManager := NewPriceCacheManager()
+	monitor := NewPythPriceMonitor(cacheManager, "https://hermes.pyth.network", 5*time.Second, true)
 
 	// Test that cache manager is properly initialized
-	cacheManager := monitor.GetCacheManager()
-	if cacheManager == nil {
+	retrievedCacheManager := monitor.GetCacheManager()
+	if retrievedCacheManager == nil {
 		t.Fatal("Expected cache manager to be non-nil")
 	}
 
 	// Test lastSaved tracking
-	initialTime := cacheManager.GetLastSaved()
+	initialTime := retrievedCacheManager.GetLastSaved()
 	time.Sleep(10 * time.Millisecond) // Small delay
 
-	cacheManager.UpdateLastSaved()
-	updatedTime := cacheManager.GetLastSaved()
+	retrievedCacheManager.UpdateLastSaved()
+	updatedTime := retrievedCacheManager.GetLastSaved()
 
 	if !updatedTime.After(initialTime) {
 		t.Error("Expected lastSaved to be updated")
@@ -110,7 +117,8 @@ func TestCacheManagerIntegration(t *testing.T) {
 }
 
 func TestImmediateModeToggle(t *testing.T) {
-	monitor := NewPythPriceMonitor("https://hermes.pyth.network", 5*time.Second, false)
+	cacheManager := NewPriceCacheManager()
+	monitor := NewPythPriceMonitor(cacheManager, "https://hermes.pyth.network", 5*time.Second, false)
 
 	if monitor.immediateMode != false {
 		t.Errorf("Expected immediate mode to be false, got %v", monitor.immediateMode)

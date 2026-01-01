@@ -116,7 +116,7 @@ func chainlink_start() {
 	}
 
 	// Create price monitor with 30-second intervals and immediate mode enabled
-	priceMonitor := pricefeed.NewPriceMonitorWithImmediateMode(30*time.Second, true)
+	priceMonitor := pricefeed.NewCLPriceMonitor(priceCacheManager, 30*time.Second, true)
 
 	// Set network configuration for RPC switching
 	priceMonitor.SetNetworkConfig(networkConfig)
@@ -241,10 +241,13 @@ func chainlink_start() {
 								symbol = "Unknown"
 							}
 
-							// Convert price to human readable format (assuming 8 decimals)
-							// Use big.Float for proper precision
+							// Convert price to human readable format using Exponent
 							priceFloat := new(big.Float).SetInt(priceData.Answer)
-							divisor := new(big.Float).SetInt64(1e8) // 10^8
+							exponent := priceData.Exponent
+							if exponent == 0 {
+								exponent = -8 // Default
+							}
+							divisor := new(big.Float).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(-exponent)), nil))
 							priceFloat.Quo(priceFloat, divisor)
 
 							// Convert to float64 for display
@@ -383,8 +386,11 @@ func pyth_start() {
 		}
 	}
 
+	// Create price cache manager for Pyth monitor
+	pythCacheManager := pricefeed.NewPriceCacheManager()
+
 	// Create Pyth price monitor
-	monitor := pricefeed.NewPythPriceMonitor(endpoint, interval, immediateMode)
+	monitor := pricefeed.NewPythPriceMonitor(pythCacheManager, endpoint, interval, immediateMode)
 
 	// Add price feeds to monitor
 	for priceID, symbol := range priceFeeds {

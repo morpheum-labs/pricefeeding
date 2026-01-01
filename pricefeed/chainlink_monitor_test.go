@@ -5,18 +5,19 @@ import (
 	"time"
 )
 
-func TestPriceMonitorCreation(t *testing.T) {
+func TestCLPriceMonitorCreation(t *testing.T) {
 	interval := 30 * time.Second
 	immediateMode := true
+	cacheManager := NewPriceCacheManager()
 
-	monitor := NewPriceMonitorWithImmediateMode(interval, immediateMode)
+	monitor := NewCLPriceMonitor(cacheManager, interval, immediateMode)
 
 	if monitor == nil {
 		t.Fatal("Expected monitor to be created, got nil")
 	}
 
-	if monitor.cache == nil {
-		t.Fatal("Expected cache to be initialized, got nil")
+	if monitor.cacheManager == nil {
+		t.Fatal("Expected cache manager to be initialized, got nil")
 	}
 
 	if monitor.interval != interval {
@@ -28,8 +29,9 @@ func TestPriceMonitorCreation(t *testing.T) {
 	}
 }
 
-func TestPriceMonitorAddFeedWithSymbol(t *testing.T) {
-	monitor := NewPriceMonitorWithImmediateMode(30*time.Second, true)
+func TestCLPriceMonitorAddFeedWithSymbol(t *testing.T) {
+	cacheManager := NewPriceCacheManager()
+	monitor := NewCLPriceMonitor(cacheManager, 30*time.Second, true)
 
 	networkID := uint64(42161)                                  // Arbitrum
 	feedAddress := "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612" // ETH/USD on Arbitrum
@@ -50,7 +52,8 @@ func TestPriceMonitorAddFeedWithSymbol(t *testing.T) {
 }
 
 func TestGetFeedSymbol(t *testing.T) {
-	monitor := NewPriceMonitorWithImmediateMode(30*time.Second, true)
+	cacheManager := NewPriceCacheManager()
+	monitor := NewCLPriceMonitor(cacheManager, 30*time.Second, true)
 
 	networkID := uint64(42161)
 	feedAddress := "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
@@ -71,7 +74,8 @@ func TestGetFeedSymbol(t *testing.T) {
 }
 
 func TestChainlinkImmediateModeToggle(t *testing.T) {
-	monitor := NewPriceMonitorWithImmediateMode(30*time.Second, false)
+	cacheManager := NewPriceCacheManager()
+	monitor := NewCLPriceMonitor(cacheManager, 30*time.Second, false)
 
 	if monitor.immediateMode != false {
 		t.Errorf("Expected immediate mode to be false, got %v", monitor.immediateMode)
@@ -85,7 +89,8 @@ func TestChainlinkImmediateModeToggle(t *testing.T) {
 }
 
 func TestPrintStatus(t *testing.T) {
-	monitor := NewPriceMonitorWithImmediateMode(30*time.Second, true)
+	cacheManager := NewPriceCacheManager()
+	monitor := NewCLPriceMonitor(cacheManager, 30*time.Second, true)
 
 	// Add some test feeds
 	monitor.AddPriceFeedWithSymbol(42161, "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612", "ETH/USD")
