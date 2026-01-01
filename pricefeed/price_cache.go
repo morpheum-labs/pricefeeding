@@ -178,28 +178,7 @@ func (pc *PriceCache) estimateSizeUnlocked() int64 {
 			size += 8 // String header overhead
 
 			// Estimate PriceInfo size based on type
-			switch p := priceInfo.(type) {
-			case *types.ChainlinkPrice:
-				// ChainlinkPrice: 5 *big.Int + time.Time + int + uint64 + string
-				size += 5*32 + // 5 big.Int values (rough estimate)
-					15 + // time.Time
-					8 + // int (exponent)
-					8 + // uint64 (networkID)
-					int64(len(p.FeedAddress)) + 8 // string (feedAddress)
-			case *types.PythPrice:
-				// PythPrice: ID, Symbol, Price, Confidence, EMA, EMAConfidence (all *big.Int or string), Exponent, PublishTime, Slot, Timestamp, NetworkID
-				size += int64(len(p.ID)) + 8 +
-					int64(len(p.Symbol)) + 8 +
-					32 + // Price *big.Int
-					32 + // Confidence *big.Int
-					32 + // EMA *big.Int (if present)
-					32 + // EMAConfidence *big.Int (if present)
-					8 + // Exponent
-					8 + // PublishTime
-					8 + // Slot
-					15 + // Timestamp
-					8 // NetworkID
-			}
+			size += EstimatePriceInfoSize(priceInfo)
 		}
 	}
 
@@ -222,11 +201,11 @@ func (pc *PriceCache) prune() {
 
 	// Collect all entries with their timestamps
 	type cacheEntry struct {
-		networkID  uint64
-		prefixed   string
-		priceInfo  types.PriceInfo
-		timestamp  time.Time
-		entrySize  int64
+		networkID uint64
+		prefixed  string
+		priceInfo types.PriceInfo
+		timestamp time.Time
+		entrySize int64
 	}
 
 	var entries []cacheEntry
@@ -238,12 +217,7 @@ func (pc *PriceCache) prune() {
 			timestamp := priceInfo.GetTimestamp()
 			// Estimate entry size
 			entrySize := int64(len(prefixed)) + 8 // key size
-			switch p := priceInfo.(type) {
-			case *types.ChainlinkPrice:
-				entrySize += 5*32 + 15 + 8 + 8 + int64(len(p.FeedAddress)) + 8
-			case *types.PythPrice:
-				entrySize += int64(len(p.ID)) + 8 + int64(len(p.Symbol)) + 8 + 32*4 + 8*4 + 15 + 8
-			}
+			entrySize += EstimatePriceInfoSize(priceInfo)
 
 			entries = append(entries, cacheEntry{
 				networkID: networkID,

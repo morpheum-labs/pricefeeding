@@ -34,6 +34,8 @@ type PriceInfo interface {
 	GetTimestamp() time.Time   // Returns the timestamp
 	GetPrice() (*big.Int, int) // Returns the raw price and exponent
 	GetIdentifier() string     // Returns the identifier (feedAddress for Chainlink, ID for Pyth)
+	GetUint64SatoshiPrice() uint64 // Returns the price in satoshi format as uint64 (convenience method)
+	GetPriceInSatoshi() (*big.Int, error) // Returns the price in satoshi format (1e8), adjusted by the exponent
 }
 
 // ChainlinkPrice implements PriceInfo for Chainlink data
