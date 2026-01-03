@@ -29,12 +29,12 @@ const (
 
 // PriceInfo is an interface for price data from any source
 type PriceInfo interface {
-	GetSource() PriceSource    // Returns the source (e.g., "chainlink" or "pyth")
-	GetNetworkID() uint64      // Returns the network ID
-	GetTimestamp() time.Time   // Returns the timestamp
-	GetPrice() (*big.Int, int) // Returns the raw price and exponent
-	GetIdentifier() string     // Returns the identifier (feedAddress for Chainlink, ID for Pyth)
-	GetUint64SatoshiPrice() uint64 // Returns the price in satoshi format as uint64 (convenience method)
+	GetSource() PriceSource               // Returns the source (e.g., "chainlink" or "pyth")
+	GetNetworkID() uint64                 // Returns the network ID
+	GetTimestamp() time.Time              // Returns the timestamp
+	GetPrice() (*big.Int, int)            // Returns the raw price and exponent
+	GetIdentifier() string                // Returns the identifier (feedAddress for Chainlink, ID for Pyth)
+	GetUint64SatoshiPrice() uint64        // Returns the price in satoshi format as uint64 (convenience method)
 	GetPriceInSatoshi() (*big.Int, error) // Returns the price in satoshi format (1e8), adjusted by the exponent
 }
 
@@ -141,6 +141,43 @@ func (p *PythPrice) GetPrice() (*big.Int, int) {
 
 func (p *PythPrice) GetIdentifier() string {
 	return p.ID
+}
+
+// GetPriceInSatoshi returns the price in satoshi format (1e8), adjusted by the exponent
+//
+// PURPOSE: Convert Pyth price format (Price big.Int + exponent) to satoshi-based uint64
+// USAGE: Converting oracle prices to internal satoshi format for orderbook/matching
+// CRITICAL: Price is stored as big.Int, exponent adjusts decimal position
+// Formula: actual_price = Price * 10^exponent, then satoshi_price = actual_price * SatoshiScale
+// Simplified: satoshi_price = Price * 10^exponent * SatoshiScale
+//
+// Example:
+//   - Price: 5000000000, Exponent: -8 → Actual: 50.0 → Satoshi: 5000000000
+//   - Price: 100000000, Exponent: -8 → Actual: 1.0 → Satoshi: 100000000
+//   - Price: 5000000000000, Exponent: -8 → Actual: 50000.0 → Satoshi: 5000000000000
+func (p *PythPrice) GetPriceInSatoshi() (*big.Int, error) {
+	if p.Price == nil {
+		return nil, fmt.Errorf("Price is nil")
+	}
+
+	// Calculate adjustment factor: 10^exponent * SatoshiScale
+	// Exponent adjusts the decimal position, SatoshiScale converts to satoshi format
+	exponentFactor := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(p.Exponent)), nil)
+	satoshiScaleBig := big.NewInt(int64(safem.SatoshiScale))
+	adjustment := new(big.Int).Mul(exponentFactor, satoshiScaleBig)
+
+	// Multiply Price by adjustment to get satoshi value
+	result := new(big.Int).Mul(p.Price, adjustment)
+
+	return result, nil
+}
+
+// GetUint64SatoshiPrice returns the price in satoshi format as uint64
+// This is a convenience method that calls GetPriceInSatoshi() and converts to uint64
+// Note: This will panic if the price exceeds uint64 max value
+func (p *PythPrice) GetUint64SatoshiPrice() uint64 {
+	priceInSatoshi, _ := p.GetPriceInSatoshi()
+	return priceInSatoshi.Uint64()
 }
 
 // PythPriceData represents price data from Pyth Network
