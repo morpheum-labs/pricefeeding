@@ -4,7 +4,7 @@ A Go client library for interacting with the Pyth Network Hermes service, provid
 
 ## Features
 
-- **Price Feed Discovery**: Query available price feeds by symbol and asset type
+- **Price Feed Discovery**: Query available price feeds by ticker and asset type
 - **Latest Price Updates**: Get the most recent price updates for specific price feed IDs
 - **Historical Price Updates**: Retrieve price updates at specific timestamps
 - **TWAP (Time Weighted Average Price)**: Calculate TWAPs over configurable time windows

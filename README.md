@@ -366,7 +366,7 @@ func main() {
 ```yaml
 # Example configuration for crypto price feeds
 btc:
-  symbol:      BTC/USD
+  ticker:      BTC/USD
   proxy:       "0x6ce185860a4963106506C203335A2910413708e9"
   decimals:    8
   min_answer:  "10000000000000"
@@ -376,7 +376,7 @@ btc:
   staleness_threshold: 3600
 
 eth:
-  symbol:      ETH/USD
+  ticker:      ETH/USD
   proxy:       "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
   decimals:    8
   min_answer:  "100000000"
@@ -391,21 +391,21 @@ eth:
 ```yaml
 # Example configuration for Pyth price feeds
 btc:
-  symbol:      BTC/USD
+  ticker:      BTC/USD
   price_id:    "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
   decimals:    5
   description: "Bitcoin / US Dollar"
   category:    "crypto"
 
 eth:
-  symbol:      ETH/USD
+  ticker:      ETH/USD
   price_id:    "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"
   decimals:    5
   description: "Ethereum / US Dollar"
   category:    "crypto"
 
 tslax:
-  symbol:      TSLAX/USD
+  ticker:      TSLAX/USD
   price_id:    "47a156470288850a440df3a6ce85a55917b813a19bb5b31128a33a986566a362"
   decimals:    5
   description: "Tesla / US Dollar"
@@ -417,7 +417,7 @@ tslax:
 ```yaml
 # Example configuration for stock price feeds
 nvda:
-  symbol:      NVDA/USD
+  ticker:      NVDA/USD
   proxy:       "0x4881A4418b5F2460B21d6F08CD5aA0678a7f262F"
   decimals:    2
   min_answer:  "10"
@@ -460,7 +460,7 @@ nvda:
 
 #### Feed Management
 - `AddPriceFeed(networkID uint64, feedAddress string)`: Adds a price feed to monitor
-- `AddPriceFeedWithSymbol(networkID, feedAddress, symbol)`: Adds a price feed with symbol
+- `AddPriceFeedWithSymbol(networkID, feedAddress, ticker)`: Adds a price feed with ticker
 
 #### Price Retrieval
 - `GetPrice(networkID uint64, feedAddress string)`: Gets latest price for a feed
@@ -478,7 +478,7 @@ nvda:
 - `SetImmediateMode(enabled bool)`: Toggles immediate price printing
 
 #### Feed Management
-- `AddPriceFeed(priceID, symbol string)`: Adds a Pyth price feed to monitor
+- `AddPriceFeed(priceID, ticker string)`: Adds a Pyth price feed to monitor
 
 #### Price Retrieval
 - `GetPrice(priceID string)`: Gets latest price for a specific feed

@@ -16,6 +16,7 @@ type WebSocketClient struct {
 	url            string
 	conn           *websocket.Conn
 	connMutex      sync.RWMutex
+	writeMutex     sync.Mutex // CRITICAL: Dedicated mutex for serializing all websocket writes
 	connected      bool
 	reconnectDelay time.Duration
 	maxReconnects  int
@@ -139,6 +140,10 @@ func (ws *WebSocketClient) Subscribe(priceIDs []HexString) error {
 		"ids":  priceIDs,
 	}
 
+	// CRITICAL: Use dedicated write mutex to prevent concurrent writes
+	ws.writeMutex.Lock()
+	defer ws.writeMutex.Unlock()
+
 	ws.connMutex.RLock()
 	conn := ws.conn
 	ws.connMutex.RUnlock()
@@ -167,6 +172,10 @@ func (ws *WebSocketClient) Unsubscribe() error {
 	unsubscribeMsg := map[string]interface{}{
 		"type": "unsubscribe",
 	}
+
+	// CRITICAL: Use dedicated write mutex to prevent concurrent writes
+	ws.writeMutex.Lock()
+	defer ws.writeMutex.Unlock()
 
 	ws.connMutex.RLock()
 	conn := ws.conn
@@ -419,7 +428,12 @@ func (ws *WebSocketClient) SetPongHandler(handler func(string) error) {
 }
 
 // WriteJSON writes a JSON message to the WebSocket connection
+// Thread-safe: uses dedicated write mutex to prevent concurrent writes
 func (ws *WebSocketClient) WriteJSON(v interface{}) error {
+	// CRITICAL: Acquire write mutex FIRST to serialize all writes
+	ws.writeMutex.Lock()
+	defer ws.writeMutex.Unlock()
+
 	ws.connMutex.RLock()
 	defer ws.connMutex.RUnlock()
 

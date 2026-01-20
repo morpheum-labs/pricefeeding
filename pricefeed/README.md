@@ -92,7 +92,7 @@ monitor := pricefeed.NewPythPriceMonitor(endpoint, 10*time.Second, true)
 ```go
 type PythPriceData struct {
     ID            string    `json:"id"`
-    Symbol        string    `json:"symbol,omitempty"`
+    Symbol        string    `json:"ticker,omitempty"`
     Price         *big.Int  `json:"price"`
     Confidence    *big.Int  `json:"confidence"`
     Exponent      int       `json:"exponent"`
