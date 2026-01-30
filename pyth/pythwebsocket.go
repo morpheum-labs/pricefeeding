@@ -36,6 +36,12 @@ type WebSocketClient struct {
 
 	// Connection headers
 	headers map[string]string
+
+	// gaveUp indicates that max reconnection attempts were reached
+	// and the client has permanently stopped trying to reconnect.
+	// This prevents the readMessages loop from continuously calling
+	// handleReconnect and flooding logs with errors.
+	gaveUp bool
 }
 
 // WebSocketConfig represents configuration for the WebSocket client
@@ -96,8 +102,26 @@ func (ws *WebSocketClient) Connect() error {
 	ws.conn = conn
 	ws.connected = true
 	ws.reconnectCount = 0
+	ws.gaveUp = false // Reset gave up flag on successful connection
 
 	return nil
+}
+
+// HasGivenUp returns true if the client has exhausted all reconnection attempts
+// and is no longer trying to reconnect. Use Reset() to allow retry.
+func (ws *WebSocketClient) HasGivenUp() bool {
+	ws.connMutex.RLock()
+	defer ws.connMutex.RUnlock()
+	return ws.gaveUp
+}
+
+// Reset resets the client state to allow reconnection attempts again.
+// Call this followed by Start() to retry connecting after giving up.
+func (ws *WebSocketClient) Reset() {
+	ws.connMutex.Lock()
+	defer ws.connMutex.Unlock()
+	ws.gaveUp = false
+	ws.reconnectCount = 0
 }
 
 // Disconnect closes the WebSocket connection
@@ -236,9 +260,17 @@ func (ws *WebSocketClient) readMessages() {
 		default:
 		}
 
+		// Check if we've given up on reconnection attempts
 		ws.connMutex.RLock()
+		gaveUp := ws.gaveUp
 		conn := ws.conn
 		ws.connMutex.RUnlock()
+
+		if gaveUp {
+			// Max reconnection attempts reached, stop the read loop
+			// HTTP polling fallback is active via pythMonitor
+			return
+		}
 
 		if conn == nil {
 			// Connection lost, attempt to reconnect
@@ -337,12 +369,21 @@ func (ws *WebSocketClient) handleReconnect() {
 		ws.conn.Close()
 		ws.conn = nil
 	}
-	ws.connMutex.Unlock()
+
+	// Check if we've already given up
+	if ws.gaveUp {
+		ws.connMutex.Unlock()
+		return
+	}
 
 	if ws.reconnectCount >= ws.maxReconnects {
+		// Set gaveUp flag to prevent readMessages loop from calling us again
+		ws.gaveUp = true
+		ws.connMutex.Unlock()
 		ws.handleError(fmt.Errorf("max reconnection attempts (%d) reached", ws.maxReconnects))
 		return
 	}
+	ws.connMutex.Unlock()
 
 	ws.reconnectCount++
 
