@@ -128,7 +128,7 @@ ethereum_rpcs:
 # Price feed monitoring configuration
 price_feeds:
   ethereum:
-    chain_id: 1
+    chainId: 1
     feeds:
       - name: "ETH/USD"
         address: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"

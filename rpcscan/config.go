@@ -45,7 +45,7 @@ type ExtendedConfig struct {
 	} `yaml:"monitoring"`
 
 	PriceFeeds map[string]struct {
-		ChainID int `yaml:"chain_id"`
+		ChainID int `yaml:"chainId"`
 		Feeds   []struct {
 			Name     string `yaml:"name"`
 			Address  string `yaml:"address"`
