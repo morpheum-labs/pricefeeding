@@ -40,7 +40,7 @@ type ExtendedConfig struct {
 	Monitoring struct {
 		RPCCheckInterval   int `yaml:"rpc_check_interval"`
 		PriceFetchInterval int `yaml:"price_fetch_interval"`
-		RPCTimeout         int `yaml:"rpc_timeout"`
+		RPCTimeout         int `yaml:"rpcTimeout"`
 		MaxConcurrentCalls int `yaml:"max_concurrent_calls"`
 	} `yaml:"monitoring"`
 
@@ -51,12 +51,12 @@ type ExtendedConfig struct {
 			Address  string `yaml:"address"`
 			Decimals int    `yaml:"decimals"`
 		} `yaml:"feeds"`
-	} `yaml:"price_feeds"`
+	} `yaml:"priceFeeds"`
 
 	Cache struct {
 		Enabled    bool `yaml:"enabled"`
 		Expiration int  `yaml:"expiration"`
-		MaxSize    int  `yaml:"max_size"`
+		MaxSize    int  `yaml:"maxSize"`
 	} `yaml:"cache"`
 }
 

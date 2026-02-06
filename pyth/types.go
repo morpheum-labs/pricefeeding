@@ -14,7 +14,7 @@ const (
 	AssetTypeFX                   AssetType = "fx"
 	AssetTypeMetal                AssetType = "metal"
 	AssetTypeRates                AssetType = "rates"
-	AssetTypeCryptoRedemptionRate AssetType = "crypto_redemption_rate"
+	AssetTypeCryptoRedemptionRate AssetType = "crypto_redemptionRate"
 )
 
 // EncodingType represents the encoding format for binary data
@@ -41,12 +41,12 @@ type HexString string
 type PriceFeedMetadata struct {
 	ID            string    `json:"id"`
 	Symbol        string    `json:"symbol"`
-	AssetType     AssetType `json:"asset_type"`
+	AssetType     AssetType `json:"assetType"`
 	Description   string    `json:"description"`
 	MinPublishers int       `json:"min_publishers"`
 	Decimals      int       `json:"decimals"`
 	Status        string    `json:"status"`
-	LastUpdated   time.Time `json:"last_updated"`
+	LastUpdated   time.Time `json:"lastUpdated"`
 }
 
 // BinaryPriceUpdate represents a binary price update
@@ -73,20 +73,20 @@ type PriceUpdate struct {
 
 // ParsedPriceUpdate represents parsed price update data
 type ParsedPriceUpdate struct {
-	PriceFeeds []PriceFeed `json:"price_feeds"`
+	PriceFeeds []PriceFeed `json:"priceFeeds"`
 }
 
 // PriceFeed represents a single price feed in a price update
 type PriceFeed struct {
 	ID          string   `json:"id"`
 	Price       Price    `json:"price"`
-	EmaPrice    Price    `json:"ema_price"`
+	EmaPrice    Price    `json:"emaPrice"`
 	Metadata    Metadata `json:"metadata"`
 	Ema         Ema      `json:"ema,omitempty"`
 	Conf        string   `json:"conf,omitempty"`
 	PublishSlot int64    `json:"publish_slot,omitempty"`
 	PrevSlot    int64    `json:"prev_slot,omitempty"`
-	PrevPrice   Price    `json:"prev_price,omitempty"`
+	PrevPrice   Price    `json:"prevPrice,omitempty"`
 	PrevConf    string   `json:"prev_conf,omitempty"`
 	PrevEma     Ema      `json:"prev_ema,omitempty"`
 	PrevEmaConf string   `json:"prev_ema_conf,omitempty"`
@@ -97,7 +97,7 @@ type Price struct {
 	Price       string `json:"price"`
 	Conf        string `json:"conf"`
 	Expo        int    `json:"expo"`
-	PublishTime int64  `json:"publish_time"`
+	PublishTime int64  `json:"publishTime"`
 }
 
 // Ema represents exponential moving average information
@@ -105,14 +105,14 @@ type Ema struct {
 	Price       string `json:"price"`
 	Conf        string `json:"conf"`
 	Expo        int    `json:"expo"`
-	PublishTime int64  `json:"publish_time"`
+	PublishTime int64  `json:"publishTime"`
 }
 
 // Metadata represents metadata for a price feed
 type Metadata struct {
 	Slot               int64 `json:"slot"`
-	ProofAvailableTime int64 `json:"proof_available_time"`
-	PrevPublishTime    int64 `json:"prev_publish_time"`
+	ProofAvailableTime int64 `json:"proof_availableTime"`
+	PrevPublishTime    int64 `json:"prev_publishTime"`
 }
 
 // TwapsResponse represents TWAP (Time Weighted Average Price) response
@@ -136,7 +136,7 @@ type Twap struct {
 	Conf        string `json:"conf"`
 	PublishSlot int64  `json:"publish_slot"`
 	PrevSlot    int64  `json:"prev_slot"`
-	PrevPrice   Price  `json:"prev_price"`
+	PrevPrice   Price  `json:"prevPrice"`
 	PrevConf    string `json:"prev_conf"`
 	PrevEma     Ema    `json:"prev_ema"`
 	PrevEmaConf string `json:"prev_ema_conf"`
@@ -176,21 +176,21 @@ type HermesClientConfig struct {
 // GetPriceFeedsOptions represents options for getting price feeds
 type GetPriceFeedsOptions struct {
 	Query     *string    `json:"query,omitempty"`
-	AssetType *AssetType `json:"asset_type,omitempty"`
+	AssetType *AssetType `json:"assetType,omitempty"`
 }
 
 // GetLatestPriceUpdatesOptions represents options for getting latest price updates
 type GetLatestPriceUpdatesOptions struct {
 	Encoding              *EncodingType `json:"encoding,omitempty"`
 	Parsed                *bool         `json:"parsed,omitempty"`
-	IgnoreInvalidPriceIds *bool         `json:"ignore_invalid_price_ids,omitempty"`
+	IgnoreInvalidPriceIds *bool         `json:"ignore_invalidPriceIds,omitempty"`
 }
 
 // GetPriceUpdatesAtTimestampOptions represents options for getting price updates at timestamp
 type GetPriceUpdatesAtTimestampOptions struct {
 	Encoding              *EncodingType `json:"encoding,omitempty"`
 	Parsed                *bool         `json:"parsed,omitempty"`
-	IgnoreInvalidPriceIds *bool         `json:"ignore_invalid_price_ids,omitempty"`
+	IgnoreInvalidPriceIds *bool         `json:"ignore_invalidPriceIds,omitempty"`
 }
 
 // GetPriceUpdatesStreamOptions represents options for streaming price updates
@@ -199,14 +199,14 @@ type GetPriceUpdatesStreamOptions struct {
 	Parsed                *bool         `json:"parsed,omitempty"`
 	AllowUnordered        *bool         `json:"allow_unordered,omitempty"`
 	BenchmarksOnly        *bool         `json:"benchmarks_only,omitempty"`
-	IgnoreInvalidPriceIds *bool         `json:"ignore_invalid_price_ids,omitempty"`
+	IgnoreInvalidPriceIds *bool         `json:"ignore_invalidPriceIds,omitempty"`
 }
 
 // GetLatestTwapsOptions represents options for getting latest TWAPs
 type GetLatestTwapsOptions struct {
 	Encoding              *EncodingType `json:"encoding,omitempty"`
 	Parsed                *bool         `json:"parsed,omitempty"`
-	IgnoreInvalidPriceIds *bool         `json:"ignore_invalid_price_ids,omitempty"`
+	IgnoreInvalidPriceIds *bool         `json:"ignore_invalidPriceIds,omitempty"`
 }
 
 // GetLatestPublisherCapsOptions represents options for getting latest publisher caps

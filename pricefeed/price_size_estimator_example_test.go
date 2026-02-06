@@ -74,7 +74,7 @@ func Example_registerSizeEstimator() {
 
 // ExamplePriceCacheManagerWithCustomSize demonstrates how to use
 // PriceCacheManager with custom price types that have registered size estimators.
-func Example_priceCacheManagerWithCustomSize() {
+func ExamplePriceCacheManagerWithCustomSize() {
 	// Step 1: Register the size estimator (typically done at package init)
 	pricefeed.RegisterSizeEstimator[*ExampleCustomPrice](func(p *ExampleCustomPrice) int64 {
 		size := int64(0)

@@ -21,10 +21,10 @@ type PythPriceResetData struct {
 	Price         *big.Int  `json:"price"`
 	Confidence    *big.Int  `json:"confidence"`
 	Exponent      int       `json:"exponent"`
-	PublishTime   int64     `json:"publish_time"`
+	PublishTime   int64     `json:"publishTime"`
 	Slot          int64     `json:"slot"`
 	Timestamp     time.Time `json:"timestamp"`
-	NetworkID     uint64    `json:"network_id"`
+	NetworkID     uint64    `json:"networkId"`
 	EMA           *big.Int  `json:"ema,omitempty"`
 	EMAConfidence *big.Int  `json:"ema_confidence,omitempty"`
 }

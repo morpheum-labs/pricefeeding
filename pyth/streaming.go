@@ -219,7 +219,7 @@ func (c *HermesClient) GetPriceUpdatesStream(ctx context.Context, ids []HexStrin
 			params["benchmarks_only"] = *options.BenchmarksOnly
 		}
 		if options.IgnoreInvalidPriceIds != nil {
-			params["ignore_invalid_price_ids"] = *options.IgnoreInvalidPriceIds
+			params["ignore_invalidPriceIds"] = *options.IgnoreInvalidPriceIds
 		}
 		c.appendURLSearchParams(u, params)
 	}

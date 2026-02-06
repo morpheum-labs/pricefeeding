@@ -150,7 +150,7 @@ func (c *HermesClient) appendURLSearchParams(u *url.URL, params map[string]inter
 
 // GetPriceFeeds fetches the set of available price feeds
 func (c *HermesClient) GetPriceFeeds(ctx context.Context, options *GetPriceFeedsOptions) ([]PriceFeedMetadata, error) {
-	u := c.buildURL("v2/price_feeds")
+	u := c.buildURL("v2/priceFeeds")
 
 	if options != nil {
 		params := make(map[string]interface{})
@@ -158,7 +158,7 @@ func (c *HermesClient) GetPriceFeeds(ctx context.Context, options *GetPriceFeeds
 			params["query"] = *options.Query
 		}
 		if options.AssetType != nil {
-			params["asset_type"] = string(*options.AssetType)
+			params["assetType"] = string(*options.AssetType)
 		}
 		c.appendURLSearchParams(u, params)
 	}
@@ -188,7 +188,7 @@ func (c *HermesClient) GetLatestPriceUpdates(ctx context.Context, ids []HexStrin
 			params["parsed"] = *options.Parsed
 		}
 		if options.IgnoreInvalidPriceIds != nil {
-			params["ignore_invalid_price_ids"] = *options.IgnoreInvalidPriceIds
+			params["ignore_invalidPriceIds"] = *options.IgnoreInvalidPriceIds
 		}
 		c.appendURLSearchParams(u, params)
 	}
@@ -218,7 +218,7 @@ func (c *HermesClient) GetPriceUpdatesAtTimestamp(ctx context.Context, publishTi
 			params["parsed"] = *options.Parsed
 		}
 		if options.IgnoreInvalidPriceIds != nil {
-			params["ignore_invalid_price_ids"] = *options.IgnoreInvalidPriceIds
+			params["ignore_invalidPriceIds"] = *options.IgnoreInvalidPriceIds
 		}
 		c.appendURLSearchParams(u, params)
 	}
@@ -248,7 +248,7 @@ func (c *HermesClient) GetLatestTwaps(ctx context.Context, ids []HexString, wind
 			params["parsed"] = *options.Parsed
 		}
 		if options.IgnoreInvalidPriceIds != nil {
-			params["ignore_invalid_price_ids"] = *options.IgnoreInvalidPriceIds
+			params["ignore_invalidPriceIds"] = *options.IgnoreInvalidPriceIds
 		}
 		c.appendURLSearchParams(u, params)
 	}

@@ -318,8 +318,8 @@ func (ws *WebSocketClient) processMessage(msg map[string]interface{}) {
 
 // handlePriceUpdate processes price update messages
 func (ws *WebSocketClient) handlePriceUpdate(msg map[string]interface{}) {
-	// Extract price_feed data (matches PythWebSocketMessage format)
-	priceFeedData, ok := msg["price_feed"].(map[string]interface{})
+	// Extract priceFeed data (matches PythWebSocketMessage format)
+	priceFeedData, ok := msg["priceFeed"].(map[string]interface{})
 	if !ok {
 		// Try alternative format with "data" field (some WebSocket implementations use this)
 		if data, ok := msg["data"].(map[string]interface{}); ok {

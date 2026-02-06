@@ -54,8 +54,8 @@ func TestNewHermesClientWithConfig(t *testing.T) {
 func TestGetPriceFeeds(t *testing.T) {
 	// Create a mock server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v2/price_feeds" {
-			t.Errorf("Expected path '/v2/price_feeds', got '%s'", r.URL.Path)
+		if r.URL.Path != "/v2/priceFeeds" {
+			t.Errorf("Expected path '/v2/priceFeeds', got '%s'", r.URL.Path)
 		}
 
 		// Check query parameters
@@ -64,9 +64,9 @@ func TestGetPriceFeeds(t *testing.T) {
 			t.Errorf("Expected query 'btc', got '%s'", query)
 		}
 
-		assetType := r.URL.Query().Get("asset_type")
+		assetType := r.URL.Query().Get("assetType")
 		if assetType != "crypto" {
-			t.Errorf("Expected asset_type 'crypto', got '%s'", assetType)
+			t.Errorf("Expected assetType 'crypto', got '%s'", assetType)
 		}
 
 		// Return mock response
@@ -303,8 +303,8 @@ func TestGetLatestPublisherCaps(t *testing.T) {
 func TestBuildURL(t *testing.T) {
 	client := NewHermesClient("https://hermes.pyth.network", nil)
 
-	url := client.buildURL("price_feeds")
-	expected := "https://hermes.pyth.network/v2/price_feeds"
+	url := client.buildURL("priceFeeds")
+	expected := "https://hermes.pyth.network/v2/priceFeeds"
 	if url.String() != expected {
 		t.Errorf("Expected URL '%s', got '%s'", expected, url.String())
 	}
@@ -313,8 +313,8 @@ func TestBuildURL(t *testing.T) {
 func TestBuildURLWithTrailingSlash(t *testing.T) {
 	client := NewHermesClient("https://hermes.pyth.network/", nil)
 
-	url := client.buildURL("price_feeds")
-	expected := "https://hermes.pyth.network/v2/price_feeds"
+	url := client.buildURL("priceFeeds")
+	expected := "https://hermes.pyth.network/v2/priceFeeds"
 	if url.String() != expected {
 		t.Errorf("Expected URL '%s', got '%s'", expected, url.String())
 	}

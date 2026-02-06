@@ -19,7 +19,7 @@ import (
 //   - Cache size calculation (GetCacheSize())
 //   - Automatic pruning when cache exceeds MaxCacheSizeBytes
 //
-// See price_size_estimator_example_test.go for complete usage examples.
+// See priceSize_estimator_example_test.go for complete usage examples.
 
 // SizablePriceInfo is an optional interface that PriceInfo types can implement
 // to provide their own size estimation. This allows custom types to self-report

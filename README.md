@@ -110,7 +110,7 @@ secret_hash: "YOUR_SECRET_HASH_HERE"
 # Database configuration
 database:
   postgres:
-    db_conn: "postgresql://username:password@localhost:5432/chainlink_price_feed?sslmode=disable"
+    db_conn: "postgresql://username:password@localhost:5432/chainlinkPrice_feed?sslmode=disable"
     db_conn_pool: 10
 
 # RPC endpoint configurations
@@ -126,7 +126,7 @@ ethereum_rpcs:
     - "https://rpc.ankr.com/eth"
 
 # Price feed monitoring configuration
-price_feeds:
+priceFeeds:
   ethereum:
     chainId: 1
     feeds:
@@ -141,14 +141,14 @@ price_feeds:
 monitoring:
   rpc_check_interval: 30      # seconds
   price_fetch_interval: 30    # seconds
-  rpc_timeout: 10             # seconds
+  rpcTimeout: 10             # seconds
   max_concurrent_calls: 10
 
 # Cache configuration
 cache:
   enabled: true
   expiration: 300             # seconds
-  max_size: 1000
+  maxSize: 1000
 ```
 
 ### Legacy Network Configuration (`networks.json`)
@@ -157,7 +157,7 @@ The application still supports the legacy JSON configuration for backward compat
 {
   "networks": [
     {
-      "network_id": "1",
+      "networkId": "1",
       "name_1": "Ethereum Mainnet",
       "name_2": "ETH",
       "gas_token": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
@@ -369,8 +369,8 @@ btc:
   ticker:      BTC/USD
   proxy:       "0x6ce185860a4963106506C203335A2910413708e9"
   decimals:    8
-  min_answer:  "10000000000000"
-  max_answer:  "1000000000000000000000000"
+  minAnswer:  "10000000000000"
+  maxAnswer:  "1000000000000000000000000"
   threshold:   1
   heartbeat:   3600
   staleness_threshold: 3600
@@ -379,8 +379,8 @@ eth:
   ticker:      ETH/USD
   proxy:       "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
   decimals:    8
-  min_answer:  "100000000"
-  max_answer:  "10000000000000000000"
+  minAnswer:  "100000000"
+  maxAnswer:  "10000000000000000000"
   threshold:   1
   heartbeat:   3600
   staleness_threshold: 3600
@@ -392,21 +392,21 @@ eth:
 # Example configuration for Pyth price feeds
 btc:
   ticker:      BTC/USD
-  price_id:    "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
+  priceId:    "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
   decimals:    5
   description: "Bitcoin / US Dollar"
   category:    "crypto"
 
 eth:
   ticker:      ETH/USD
-  price_id:    "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"
+  priceId:    "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"
   decimals:    5
   description: "Ethereum / US Dollar"
   category:    "crypto"
 
 tslax:
   ticker:      TSLAX/USD
-  price_id:    "47a156470288850a440df3a6ce85a55917b813a19bb5b31128a33a986566a362"
+  priceId:    "47a156470288850a440df3a6ce85a55917b813a19bb5b31128a33a986566a362"
   decimals:    5
   description: "Tesla / US Dollar"
   category:    "equity"
@@ -420,8 +420,8 @@ nvda:
   ticker:      NVDA/USD
   proxy:       "0x4881A4418b5F2460B21d6F08CD5aA0678a7f262F"
   decimals:    2
-  min_answer:  "10"
-  max_answer:  "10000"
+  minAnswer:  "10"
+  maxAnswer:  "10000"
   threshold:   0.5
   heartbeat:   3600
   staleness_threshold: 3600

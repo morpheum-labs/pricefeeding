@@ -19,7 +19,7 @@ import (
 // RPCConfig represents the configuration for a network.
 type (
 	RPCConfig struct {
-		NetworkID    string            `json:"network_id"`
+		NetworkID    string            `json:"networkId"`
 		NameStd      string            `json:"name_1"`
 		NameCoinr    string            `json:"name_2"`
 		WrappedToken string            `json:"gas_token"`
@@ -28,10 +28,10 @@ type (
 	}
 
 	EthereumClient struct {
-		NetworkID    uint64
-		mu           sync.RWMutex
-		eth_client   *ethclient.Client
-		last_updated time.Time
+		NetworkID   uint64
+		mu          sync.RWMutex
+		eth_client  *ethclient.Client
+		lastUpdated time.Time
 	}
 
 	NetworkConfiguration struct {
@@ -288,7 +288,7 @@ func MonitorAllRPCEndpoints(conf *Config, netconf *NetworkConfiguration, interva
 				}
 
 				client.NetworkID = networkID
-				client.last_updated = time.Now()
+				client.lastUpdated = time.Now()
 
 				// Thread-safe client update
 				netconf.mu.Lock()
@@ -329,7 +329,7 @@ func (q *EthereumClient) GetNetworkID() uint64 {
 func (q *EthereumClient) GetLastUpdated() time.Time {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
-	return q.last_updated
+	return q.lastUpdated
 }
 
 func RuntimeWeb3Selection(conf *Config) (chan struct{}, *NetworkConfiguration) {
@@ -451,7 +451,7 @@ func (netconf *NetworkConfiguration) SwitchRPCEndpointImmediately(networkID uint
 	}
 
 	newClient.NetworkID = networkID
-	newClient.last_updated = time.Now()
+	newClient.lastUpdated = time.Now()
 
 	// Update the client
 	netconf.ClientUse[networkID] = newClient

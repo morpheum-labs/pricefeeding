@@ -143,7 +143,7 @@ const (
     AssetTypeFX                   AssetType = "fx"
     AssetTypeMetal                AssetType = "metal"
     AssetTypeRates                AssetType = "rates"
-    AssetTypeCryptoRedemptionRate AssetType = "crypto_redemption_rate"
+    AssetTypeCryptoRedemptionRate AssetType = "crypto_redemptionRate"
 )
 ```
 

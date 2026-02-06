@@ -76,8 +76,8 @@ func (p *ChainlinkPrice) GetIdentifier() string {
 // PURPOSE: Convert Chainlink price format (Answer big.Int + exponent) to satoshi-based uint64
 // USAGE: Converting oracle prices to internal satoshi format for orderbook/matching
 // CRITICAL: Answer is stored as big.Int, exponent adjusts decimal position
-// Formula: actual_price = Answer * 10^exponent, then satoshi_price = actual_price * SatoshiScale
-// Simplified: satoshi_price = Answer * 10^exponent * SatoshiScale
+// Formula: actualPrice = Answer * 10^exponent, then satoshiPrice = actualPrice * SatoshiScale
+// Simplified: satoshiPrice = Answer * 10^exponent * SatoshiScale
 //
 // Example:
 //   - Answer: 5000000000, Exponent: -8 → Actual: 50.0 → Satoshi: 5000000000
@@ -115,10 +115,10 @@ type PythPrice struct {
 	Price         *big.Int  `json:"price"`
 	Confidence    *big.Int  `json:"confidence"`
 	Exponent      int       `json:"exponent"`
-	PublishTime   int64     `json:"publish_time"`
+	PublishTime   int64     `json:"publishTime"`
 	Slot          int64     `json:"slot"`
 	Timestamp     time.Time `json:"timestamp"`
-	NetworkID     uint64    `json:"network_id"`
+	NetworkID     uint64    `json:"networkId"`
 	EMA           *big.Int  `json:"ema,omitempty"`
 	EMAConfidence *big.Int  `json:"ema_confidence,omitempty"`
 }
@@ -148,8 +148,8 @@ func (p *PythPrice) GetIdentifier() string {
 // PURPOSE: Convert Pyth price format (Price big.Int + exponent) to satoshi-based uint64
 // USAGE: Converting oracle prices to internal satoshi format for orderbook/matching
 // CRITICAL: Price is stored as big.Int, exponent adjusts decimal position
-// Formula: actual_price = Price * 10^exponent, then satoshi_price = actual_price * SatoshiScale
-// Simplified: satoshi_price = Price * 10^exponent * SatoshiScale
+// Formula: actualPrice = Price * 10^exponent, then satoshiPrice = actualPrice * SatoshiScale
+// Simplified: satoshiPrice = Price * 10^exponent * SatoshiScale
 //
 // Example:
 //   - Price: 5000000000, Exponent: -8 → Actual: 50.0 → Satoshi: 5000000000
@@ -183,12 +183,12 @@ func (p *PythPrice) GetUint64SatoshiPrice() uint64 {
 // PythPriceData represents price data from Pyth Network
 // This is a morphcore-specific type used in the oracle adapter
 type PythPriceData struct {
-	PriceID     string                 `json:"price_id"`
+	PriceID     string                 `json:"priceId"`
 	Symbol      string                 `json:"symbol"`
 	Price       string                 `json:"price"`
 	Confidence  string                 `json:"confidence"`
 	Exponent    int                    `json:"exponent"`
-	PublishTime *timestamppb.Timestamp `json:"publish_time"`
+	PublishTime *timestamppb.Timestamp `json:"publishTime"`
 	Source      string                 `json:"source"`
 	Staleness   time.Duration
 }
@@ -198,8 +198,8 @@ type PythPriceData struct {
 // PURPOSE: Convert Pyth price format (price string + exponent) to satoshi-based uint64
 // USAGE: Converting oracle prices to internal satoshi format for orderbook/matching
 // CRITICAL: Price is stored as string, exponent adjusts decimal position
-// Formula: actual_price = price * 10^exponent, then satoshi_price = actual_price * SatoshiScale
-// Simplified: satoshi_price = price * 10^exponent * SatoshiScale
+// Formula: actualPrice = price * 10^exponent, then satoshiPrice = actualPrice * SatoshiScale
+// Simplified: satoshiPrice = price * 10^exponent * SatoshiScale
 //
 // Example:
 //   - Price: "5000000000", Exponent: -8 → Actual: 50.0 → Satoshi: 5000000000
@@ -248,24 +248,24 @@ type PythBinary struct {
 type PythPriceFeedDataV2rest struct {
 	FeedId   string      `json:"id"`
 	Price    PriceVector `json:"price"`
-	EmaPrice PriceVector `json:"ema_price"`
+	EmaPrice PriceVector `json:"emaPrice"`
 }
 
 type PythPriceFeedDataV2Ws struct {
 	FeedId   string      `json:"id"`
 	Price    PriceVector `json:"price"`
-	EmaPrice PriceVector `json:"ema_price"`
+	EmaPrice PriceVector `json:"emaPrice"`
 }
 
 type PriceVector struct {
 	Price       string `json:"price"`
 	Confidence  string `json:"conf"`
 	Exponent    int    `json:"expo"`
-	PublishTime uint64 `json:"publish_time"`
+	PublishTime uint64 `json:"publishTime"`
 }
 
 // PythWebSocketMessage represents WebSocket message from Pyth
 type PythWebSocketMessage struct {
 	Type string                `json:"type"`
-	Data PythPriceFeedDataV2Ws `json:"price_feed"`
+	Data PythPriceFeedDataV2Ws `json:"priceFeed"`
 }

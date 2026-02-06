@@ -15,8 +15,8 @@ type PriceFeedConfig struct {
 	Symbol             string  `yaml:"symbol"`
 	Proxy              string  `yaml:"proxy"`
 	Decimals           int     `yaml:"decimals"`
-	MinAnswer          string  `yaml:"min_answer"`
-	MaxAnswer          string  `yaml:"max_answer"`
+	MinAnswer          string  `yaml:"minAnswer"`
+	MaxAnswer          string  `yaml:"maxAnswer"`
 	Threshold          float64 `yaml:"threshold"`
 	Heartbeat          int     `yaml:"heartbeat"`
 	StalenessThreshold int     `yaml:"staleness_threshold"`

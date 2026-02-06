@@ -320,7 +320,7 @@ func getAssetName(priceId string, priceIdToAsset map[string]string) string {
 // PythTicker represents a single Pyth price feed configuration
 type PythTicker struct {
 	Symbol      string `yaml:"symbol"`
-	PriceID     string `yaml:"price_id"`
+	PriceID     string `yaml:"priceId"`
 	Decimals    int    `yaml:"decimals"`
 	Description string `yaml:"description"`
 	Category    string `yaml:"category"`
